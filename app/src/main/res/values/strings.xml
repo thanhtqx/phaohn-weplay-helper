@@ -63,7 +63,7 @@
     <string name="vote_seat_section_label">Ghế</string>
     <string name="vote_seat_section_range">1 – 8</string>
     <string name="vote_tap_section_label">Giây</string>
-    <string name="vote_tap_section_range">1 – 6</string>
+    <string name="vote_tap_section_range">0 – 11</string>
     <string name="status_on">Đã bật</string>
     <string name="status_off">Chưa bật</string>
     <string name="stat_pairs">Cặp từ</string>
@@ -129,7 +129,7 @@
     <string name="history_no_other">-</string>
     <string name="history_time">%1$s</string>
 
-    <string name="settings_version">Phiên bản 1.8</string>
+    <string name="settings_version">Phiên bản 1.8.1</string>
     <string name="about_copyright_title">Bản quyền</string>
     <string name="about_copyright_desc">Ứng dụng PhaoHN được phát triển để hỗ trợ tra cứu từ khóa trong game WePlay Gián điệp. Mọi quyền sở hữu trí tuệ thuộc về PhaoHN. Không sao chép, phân phối lại hoặc sử dụng thương mại khi chưa được phép.</string>
     <string name="about_features_title">Tính năng</string>

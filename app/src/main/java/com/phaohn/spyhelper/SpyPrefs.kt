@@ -13,9 +13,9 @@ object SpyPrefs {
     private const val KEY_ROOM_SEAT_COUNT = "room_seat_count"
 
     const val DEFAULT_VOTE_SEAT = 1
-    const val VOTE_TAP_AT_MIN = 1
-    const val VOTE_TAP_AT_MAX = 6
-    const val DEFAULT_VOTE_TAP_AT = VOTE_TAP_AT_MIN
+    const val VOTE_TAP_AT_MIN = 0
+    const val VOTE_TAP_AT_MAX = 11
+    const val DEFAULT_VOTE_TAP_AT = 1
 
     fun isAutoReadyEnabled(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
