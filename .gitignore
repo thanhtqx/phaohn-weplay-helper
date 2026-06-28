@@ -2,6 +2,7 @@
 build/
 app/build/
 local.properties
+# Giữ signing/ trong repo để build APK release ký sẵn
 *.iml
 .idea/
 .DS_Store
