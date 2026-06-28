@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_table_row_grid"
+    android:gravity="center_vertical"
+    android:minHeight="36dp"
+    android:orientation="horizontal"
+    android:paddingVertical="@dimen/table_row_pad">
+
+    <TextView
+        android:id="@+id/civilianText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="2"
+        android:paddingHorizontal="4dp"
+        android:textColor="@color/civilian"
+        android:textSize="@dimen/table_text" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/table_border" />
+
+    <TextView
+        android:id="@+id/spyText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="2"
+        android:paddingHorizontal="4dp"
+        android:textColor="@color/spy"
+        android:textSize="@dimen/table_text" />
+
+    <View
+        android:layout_width="1dp"
+        android:layout_height="match_parent"
+        android:background="@color/table_border" />
+
+    <LinearLayout
+        android:layout_width="@dimen/table_action_width"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btnEdit"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/edit"
+            android:padding="4dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_edit" />
+
+        <ImageButton
+            android:id="@+id/btnDelete"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/delete"
+            android:padding="4dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_delete" />
+    </LinearLayout>
+</LinearLayout>

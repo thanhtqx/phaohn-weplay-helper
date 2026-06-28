@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:clickable="true"
+    android:focusable="true">
+
+    <View
+        android:id="@+id/navActiveBg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="3dp"
+        android:layout_marginTop="@dimen/bottom_nav_active_lift"
+        android:layout_marginEnd="3dp"
+        android:layout_marginBottom="3dp"
+        android:background="@drawable/bg_nav_active_pill"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/navContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal|center_vertical"
+        android:orientation="vertical"
+        android:paddingTop="@dimen/bottom_nav_pad_v"
+        android:paddingBottom="@dimen/bottom_nav_pad_v">
+
+        <ImageView
+            android:id="@+id/navIcon"
+            android:layout_width="@dimen/bottom_nav_icon"
+            android:layout_height="@dimen/bottom_nav_icon"
+            android:contentDescription="@null"
+            android:scaleType="centerInside" />
+
+        <TextView
+            android:id="@+id/navLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/bottom_nav_icon_label_gap"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:paddingHorizontal="2dp"
+            android:textColor="@color/nav_inactive"
+            android:textSize="@dimen/bottom_nav_text" />
+    </LinearLayout>
+</FrameLayout>

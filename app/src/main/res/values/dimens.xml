@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="bottom_nav_height">42dp</dimen>
+    <dimen name="bottom_nav_bar_height">48dp</dimen>
+    <dimen name="bottom_nav_overflow_pad">6dp</dimen>
+    <dimen name="bottom_nav_corner_radius">16dp</dimen>
+    <dimen name="bottom_nav_active_radius">14dp</dimen>
+    <dimen name="bottom_nav_active_lift">-8dp</dimen>
+    <dimen name="bottom_nav_icon">20dp</dimen>
+    <dimen name="bottom_nav_icon_label_gap">1dp</dimen>
+    <dimen name="bottom_nav_pad_v">2dp</dimen>
+    <dimen name="bottom_nav_text">8sp</dimen>
+    <dimen name="search_height">34dp</dimen>
+    <dimen name="search_icon">14dp</dimen>
+    <dimen name="search_text">12sp</dimen>
+
+    <dimen name="table_stt_width">36dp</dimen>
+    <dimen name="table_time_width">108dp</dimen>
+    <dimen name="table_action_width">72dp</dimen>
+    <dimen name="table_text">11sp</dimen>
+    <dimen name="table_header_text">10sp</dimen>
+    <dimen name="table_row_pad">6dp</dimen>
+    <dimen name="vote_seat_chip_height">30dp</dimen>
+</resources>

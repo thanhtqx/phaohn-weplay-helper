@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PhaoHN</string>
+    <string name="copyright">© PhaoHN — Bản quyền thuộc PhaoHN</string>
+    <string name="accessibility_service_label">PhaoHN</string>
+    <string name="accessibility_service_description">PhaoHN — đọc từ khóa WePlay Gián điệp, lưu cặp từ, tra cứu, tự ngồi/Sẵn sàng và Đột tử khi bỏ phiếu.</string>
+    <string name="enable_accessibility">Bật Accessibility Service</string>
+    <string name="enable_overlay">Bật hiển thị trên app khác</string>
+    <string name="my_word">Từ của bạn</string>
+    <string name="other_word">Từ còn lại</string>
+    <string name="saved_pairs">Danh sách từ khóa</string>
+    <string name="not_in_db">-</string>
+    <string name="waiting_weplay">Sẵn sàng — mở WePlay vào ván Gián điệp</string>
+    <string name="overlay_channel">PhaoHN Overlay</string>
+
+    <string name="nav_home">Trang chủ</string>
+    <string name="nav_lookup">Tra cứu</string>
+    <string name="nav_words">Từ khóa</string>
+    <string name="nav_history">Lịch sử</string>
+    <string name="nav_about">Bản quyền</string>
+
+    <string name="lookup_input_hint">Nhập từ khóa…</string>
+    <string name="lookup_btn">Tra cứu</string>
+    <string name="lookup_no_result">-</string>
+    <string name="lookup_top_title">Tra cứu nhiều</string>
+    <string name="lookup_top_empty">Chưa có</string>
+    <string name="lookup_top_count">%1$d lần</string>
+    <string name="lookup_top_chip">%1$s · %2$d</string>
+    <string name="table_stt">STT</string>
+    <string name="table_civilian">Dân thường</string>
+    <string name="table_spy">Gián điệp</string>
+    <string name="table_action">Thao tác</string>
+    <string name="table_time">Thời gian</string>
+    <string name="table_my_word">Từ của bạn</string>
+    <string name="table_other_word">Từ còn lại</string>
+
+    <string name="home_tagline">Trợ lý từ khóa WePlay Gián điệp</string>
+    <string name="home_hint">Tự lưu từ khi hết ván và tra cứu từ còn lại khi đang chơi.</string>
+    <string name="ready_ok">Đã cấp đủ quyền — sẵn sàng chơi</string>
+    <string name="ready_missing">Chưa đủ quyền — bấm các mục bên dưới để bật</string>
+    <string name="permissions_title">Quyền ứng dụng</string>
+    <string name="perm_accessibility">Trợ năng PhaoHN</string>
+    <string name="perm_overlay">Hiển thị trên app khác</string>
+    <string name="perm_notification">Thông báo</string>
+    <string name="features_title">Tự động</string>
+    <string name="auto_ready_title">Tự bấm Sẵn sàng</string>
+    <string name="auto_sit_title">Tự ngồi ghế trống</string>
+    <string name="auto_vote_title">Đột tử</string>
+    <string name="status_on">Đã bật</string>
+    <string name="status_off">Chưa bật</string>
+    <string name="stat_pairs">Cặp từ</string>
+    <string name="stat_lookups">Lần tra cứu</string>
+    <string name="stat_pairs_value">%1$d cặp</string>
+    <string name="stat_lookups_value">%1$d lần</string>
+    <string name="lookup_label">Tra cứu gần nhất</string>
+    <string name="lookup_empty">Chưa có tra cứu trong ván này</string>
+    <string name="lookup_my_word">Từ của bạn: %1$s</string>
+    <string name="lookup_other_item">• %1$s</string>
+
+
+    <string name="words_stats_total">%1$d cặp từ</string>
+    <string name="words_stats_filtered">Tìm thấy %1$d / %2$d</string>
+    <string name="words_stats_empty">Không có kết quả</string>
+    <string name="search_words">Tìm từ khóa…</string>
+    <string name="add_word">Thêm từ khóa</string>
+    <string name="add_word_short">Thêm</string>
+    <string name="add_mode_single">1 cặp</string>
+    <string name="add_mode_multi">Nhiều cặp</string>
+    <string name="add_multi_label">Dân,Gián — mỗi dòng một cặp</string>
+    <string name="add_multi_hint">Bánh mì,Phở</string>
+    <string name="add_multi_invalid">Không đọc được dòng nào (cần dạng dân,gián)</string>
+    <string name="save_result_title">Kết quả</string>
+    <string name="save_stat_added">Thành công: %1$d</string>
+    <string name="save_stat_duplicate">Trùng: %1$d</string>
+    <string name="save_stat_empty">Trống: %1$d</string>
+    <string name="save_stat_same">Hai từ giống nhau: %1$d</string>
+    <string name="save_stat_invalid">Sai định dạng: %1$d</string>
+    <string name="save_stat_none">Không có gì để lưu</string>
+    <string name="ok">OK</string>
+    <string name="add_word_title">Thêm cặp từ</string>
+    <string name="edit_word_title">Sửa cặp từ</string>
+    <string name="civilian_word">Từ dân thường</string>
+    <string name="spy_word">Từ gián điệp</string>
+    <string name="civilian_short">Dân</string>
+    <string name="spy_short">Gián</string>
+    <string name="save">Lưu</string>
+    <string name="cancel">Hủy</string>
+    <string name="edit">Sửa</string>
+    <string name="delete">Xóa</string>
+    <string name="delete_confirm">Xóa cặp từ này?</string>
+    <string name="word_list_empty">Chưa có từ khóa.\nHết ván WePlay sẽ tự lưu, hoặc bấm Thêm.</string>
+    <string name="saved_ok">Đã lưu</string>
+    <string name="saved_fail">Không lưu được (trùng hoặc trống)</string>
+    <string name="updated_ok">Đã cập nhật</string>
+    <string name="updated_fail">Không cập nhật được</string>
+    <string name="deleted_ok">Đã xóa</string>
+
+    <string name="history_title">Lịch sử chơi</string>
+
+    <string name="history_stats_total">%1$d lần</string>
+    <string name="history_empty">Chưa có lịch sử.\nVào ván WePlay có từ khóa sẽ tự ghi lại.</string>
+    <string name="history_clear">Xóa lịch sử</string>
+    <string name="history_clear_confirm">Xóa toàn bộ lịch sử tra cứu?</string>
+    <string name="history_cleared">Đã xóa lịch sử</string>
+    <string name="history_delete_one_confirm">Xóa mục lịch sử này?</string>
+    <string name="import_excel">Nhập từ Excel/CSV</string>
+    <string name="export_excel">Xuất Excel/CSV</string>
+    <string name="import_empty">File trống hoặc không đọc được</string>
+
+    <string name="export_ok">Đã xuất file</string>
+    <string name="history_no_other">-</string>
+    <string name="history_time">%1$s</string>
+
+    <string name="settings_version">Phiên bản 1.6</string>
+    <string name="about_copyright_title">Bản quyền</string>
+    <string name="about_copyright_desc">Ứng dụng PhaoHN được phát triển để hỗ trợ tra cứu từ khóa trong game WePlay Gián điệp. Mọi quyền sở hữu trí tuệ thuộc về PhaoHN. Không sao chép, phân phối lại hoặc sử dụng thương mại khi chưa được phép.</string>
+    <string name="about_features_title">Tính năng</string>
+    <string name="about_features_list">• Tự lưu cặp từ khi hết ván\n• Tra cứu từ còn lại khi đang chơi\n• Bong bóng overlay trên WePlay\n• Quản lý từ khóa, nhập/xuất CSV\n• Lịch sử tra cứu từng ván</string>
+    <string name="about_footer">Cảm ơn bạn đã sử dụng PhaoHN</string>
+</resources>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="ToolbarTitleText" parent="TextAppearance.Material3.TitleSmall">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Widget.PhaoHN.Toolbar" parent="Widget.Material3.Toolbar">
+        <item name="titleTextAppearance">@style/ToolbarTitleText</item>
+        <item name="android:minHeight">44dp</item>
+    </style>
+
+    <style name="Widget.PhaoHN.BottomNavigationView" parent="Widget.Material3.BottomNavigationView">
+        <item name="itemActiveIndicatorStyle">@style/Widget.PhaoHN.BottomNav.Indicator</item>
+        <item name="itemRippleColor">@color/nav_ripple</item>
+        <item name="itemBackground">@android:color/transparent</item>
+        <item name="itemHorizontalTranslationEnabled">false</item>
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
+    <style name="Widget.PhaoHN.BottomNav.Indicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@android:color/transparent</item>
+        <item name="android:width">0dp</item>
+        <item name="android:height">0dp</item>
+        <item name="marginHorizontal">0dp</item>
+    </style>
+
+    <style name="BottomNavTextActive" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textSize">8sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/nav_active</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="BottomNavTextInactive" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textSize">8sp</item>
+        <item name="android:textColor">@color/nav_inactive</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="LookupButton" parent="Widget.Material3.Button">
+        <item name="android:minHeight">34dp</item>
+        <item name="android:paddingHorizontal">12dp</item>
+        <item name="android:textSize">12sp</item>
+        <item name="cornerRadius">10dp</item>
+    </style>
+</resources>
