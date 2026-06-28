@@ -1,60 +1,184 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/overlayRoot"
-    android:layout_width="wrap_content"
+    android:layout_width="@dimen/overlay_width"
     android:layout_height="wrap_content"
     android:background="@drawable/overlay_bubble_bg"
-    android:minWidth="120dp"
-    android:orientation="vertical"
-    android:paddingHorizontal="8dp"
-    android:paddingVertical="6dp">
+    android:paddingBottom="8dp">
 
     <LinearLayout
-        android:id="@+id/overlayDragHandle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/my_word"
-            android:textColor="#99BBDEFB"
-            android:textSize="8sp" />
+        <LinearLayout
+            android:id="@+id/overlayTitleBar"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/overlay_title_height"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="10dp"
+            android:paddingEnd="6dp"
+            android:paddingTop="4dp">
 
-        <TextView
-            android:id="@+id/overlayMyWord"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="-"
-            android:textColor="#CCFFFFFF"
-            android:textSize="10sp" />
+            <LinearLayout
+                android:id="@+id/overlayDragArea"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:contentDescription="@string/overlay_drag_bar"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="wrap_content"
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:alpha="0.9"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_app_mark" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:text="@string/overlay_window_title"
+                    android:textColor="@color/overlay_text_muted"
+                    android:textSize="10sp" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:alpha="0.45"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_overlay_grip" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/overlayMaximizeBtn"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:background="@drawable/bg_overlay_control_btn"
+                android:contentDescription="@string/overlay_maximize"
+                android:padding="6dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_overlay_maximize" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@drawable/bg_overlay_divider" />
+
+        <LinearLayout
+            android:id="@+id/overlayCompactBody"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="@string/other_word"
-            android:textColor="#99FFCC80"
-            android:textSize="8sp" />
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/overlay_pad_h"
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp">
+
+            <TextView
+                android:id="@+id/overlayMyWordCompact"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="-"
+                android:textColor="@color/overlay_text_primary"
+                android:textSize="13sp"
+                tools:text="Mỹ Tâm" />
+
+            <TextView
+                android:id="@+id/overlayCompactHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/overlay_text_hint"
+                android:textSize="10sp"
+                tools:text="7 từ khóa · nhấn □ để mở rộng" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/overlayExpandedBody"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="4dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/overlay_pad_h"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/my_word"
+                    android:textColor="@color/overlay_accent_civilian"
+                    android:textSize="9sp" />
+
+                <TextView
+                    android:id="@+id/overlayMyWord"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    android:text="-"
+                    android:textColor="@color/overlay_text_primary"
+                    android:textSize="13sp"
+                    tools:text="Mỹ Tâm" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@drawable/bg_overlay_divider" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/overlay_pad_h"
+                android:paddingTop="8dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/other_word"
+                    android:textColor="@color/overlay_accent_spy"
+                    android:textSize="9sp" />
+
+                <ScrollView
+                    android:id="@+id/overlayScroll"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/overlay_list_height"
+                    android:layout_marginTop="4dp"
+                    android:fadeScrollbars="false"
+                    android:fillViewport="false"
+                    android:overScrollMode="always"
+                    android:scrollbarStyle="insideOverlay"
+                    android:scrollbars="vertical">
+
+                    <TextView
+                        android:id="@+id/overlayOtherWord"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:lineSpacingExtra="4dp"
+                        android:paddingBottom="6dp"
+                        android:text=""
+                        android:textColor="@color/overlay_accent_spy"
+                        android:textSize="11sp"
+                        tools:text="◦ 1\n◦ 2\n◦ 3\n◦ 4\n◦ 5\n◦ 6\n◦ 7" />
+                </ScrollView>
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
-
-    <ScrollView
-        android:id="@+id/overlayScroll"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fadeScrollbars="false"
-        android:maxHeight="140dp"
-        android:scrollbars="vertical">
-
-        <TextView
-            android:id="@+id/overlayOtherWord"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:lineSpacingExtra="2dp"
-            android:paddingTop="2dp"
-            android:text=""
-            android:textColor="#E6FFAB40"
-            android:textSize="10sp" />
-    </ScrollView>
-</LinearLayout>
+</FrameLayout>

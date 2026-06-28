@@ -7,6 +7,7 @@ object WePlayIds {
     const val SELF_WORD = "$PACKAGE:id/self_word_tv"
     const val CIVILIAN = "$PACKAGE:id/spy_dialog_citizen_tv"
     const val SPY = "$PACKAGE:id/spy_dialog_spy_tv"
+    const val END_DIALOG_CLOSE_BTN = "$PACKAGE:id/spy_dialog_close_btn"
     const val READY_BTN = "$PACKAGE:id/ready_btn"
     const val READY_IMV = "$PACKAGE:id/ready_imv"
     const val NAME_TV = "$PACKAGE:id/name_tv"
@@ -22,6 +23,8 @@ object WePlayIds {
     const val EMPTY_SEAT_LABEL = "trống"
     const val LOCKED_SEAT_LABEL = "--"
     const val VOTE_VIEW = "$PACKAGE:id/vote_view"
+    const val VOTE_BTN = "$PACKAGE:id/vote_btn"
+    const val VOTE_LABEL = "bỏ phiếu"
     const val ROOM_LOCK_IV = "$PACKAGE:id/room_lock_iv"
     const val SEAT_COUNT = 8
 
@@ -30,6 +33,14 @@ object WePlayIds {
     }
 
     private val SEAT_RESOURCE_PATTERN = Regex("""^$PACKAGE:id/([a-z]+_seat)_(\d+)$""")
+
+    private val KNOWN_SEAT_PREFIXES = listOf(
+        "eight_seat_",
+        "six_seat_",
+        "four_seat_",
+        "five_seat_",
+        "seven_seat_",
+    )
 
     fun detectSeatLayout(root: AccessibilityNodeInfo): SeatLayout? {
         val counts = mutableMapOf<String, Int>()
@@ -73,6 +84,33 @@ object WePlayIds {
     }
 
     fun seatId(number: Int): String = SeatLayout("eight_seat_", 8).seatId(number)
+
+    fun seatResourceId(root: AccessibilityNodeInfo, number: Int): String? {
+        if (number !in 1..SEAT_COUNT) return null
+        val layout = detectSeatLayout(root)
+        if (layout != null && number <= layout.count) return layout.seatId(number)
+        for (prefix in KNOWN_SEAT_PREFIXES) {
+            val id = "$PACKAGE:id/$prefix$number"
+            val nodes = root.findAccessibilityNodeInfosByViewId(id)
+            try {
+                if (nodes.isNotEmpty()) return id
+            } finally {
+                nodes.forEach { it.recycle() }
+            }
+        }
+        return null
+    }
+
+    fun obtainSeatNode(root: AccessibilityNodeInfo, number: Int): AccessibilityNodeInfo? {
+        val id = seatResourceId(root, number) ?: return null
+        val nodes = root.findAccessibilityNodeInfosByViewId(id)
+        try {
+            val node = nodes.firstOrNull() ?: return null
+            return AccessibilityNodeInfo.obtain(node)
+        } finally {
+            nodes.forEach { it.recycle() }
+        }
+    }
 }
 
 object WordParser {

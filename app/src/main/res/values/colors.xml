@@ -24,4 +24,14 @@
     <color name="nav_indicator_stroke">#D5DBF5</color>
     <color name="nav_bar_stroke">#DDE3F0</color>
     <color name="nav_ripple">#221565C0</color>
+
+    <color name="overlay_bg">#B3283558</color>
+    <color name="overlay_divider">#33FFFFFF</color>
+    <color name="overlay_control_normal">#18FFFFFF</color>
+    <color name="overlay_control_pressed">#33FFFFFF</color>
+    <color name="overlay_text_primary">#F5F7FF</color>
+    <color name="overlay_text_muted">#B0B9D9</color>
+    <color name="overlay_text_hint">#8A94B8</color>
+    <color name="overlay_accent_civilian">#90CAF9</color>
+    <color name="overlay_accent_spy">#FFCC80</color>
 </resources>

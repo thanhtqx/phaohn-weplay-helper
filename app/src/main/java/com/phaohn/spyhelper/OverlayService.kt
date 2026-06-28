@@ -11,32 +11,38 @@ import android.os.IBinder
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
-import android.view.ScaleGestureDetector
+import android.view.View
 import android.view.WindowManager
+import android.widget.ImageView
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.app.NotificationCompat
+import androidx.core.view.isVisible
 
 class OverlayService : Service() {
 
     private var windowManager: WindowManager? = null
-    private var overlayView: android.view.View? = null
+    private var overlayView: View? = null
     private var layoutParams: WindowManager.LayoutParams? = null
     private var myWordView: TextView? = null
+    private var myWordCompactView: TextView? = null
+    private var compactHintView: TextView? = null
     private var otherWordView: TextView? = null
-    private var scaleDetector: ScaleGestureDetector? = null
+    private var maximizeBtn: ImageView? = null
 
     private var dragStartX = 0f
     private var dragStartY = 0f
     private var paramStartX = 0
     private var paramStartY = 0
-    private var scaleFactor = 1f
+    private var isExpanded = false
+    private var lastOtherCount = 0
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
         instance = this
-        scaleFactor = overlayPrefs().getFloat(PREF_SCALE, 1f).coerceIn(MIN_SCALE, MAX_SCALE)
+        isExpanded = overlayPrefs().getBoolean(PREF_EXPANDED, false)
         startForeground(NOTIFICATION_ID, buildNotification())
     }
 
@@ -63,8 +69,9 @@ class OverlayService : Service() {
     private fun showOverlay() {
         if (overlayView != null) return
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        val overlayWidth = resources.getDimensionPixelSize(R.dimen.overlay_width)
         layoutParams = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
+            overlayWidth,
             WindowManager.LayoutParams.WRAP_CONTENT,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -77,53 +84,72 @@ class OverlayService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = 24
-            y = 180
+            val prefs = overlayPrefs()
+            x = prefs.getInt(PREF_POS_X, DEFAULT_POS_X)
+            y = prefs.getInt(PREF_POS_Y, DEFAULT_POS_Y)
         }
-        val root = LayoutInflater.from(applicationContext)
-            .inflate(R.layout.overlay_spy_word, null)
-            .apply {
-                alpha = 0.72f
-                pivotX = 0f
-                pivotY = 0f
-                scaleX = scaleFactor
-                scaleY = scaleFactor
-            }
-        overlayView = root
+        val root = LayoutInflater.from(applicationContext).inflate(R.layout.overlay_spy_word, null)
+        overlayView = root.apply { alpha = 1f }
 
-        scaleDetector = ScaleGestureDetector(
-            applicationContext,
-            object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-                override fun onScale(detector: ScaleGestureDetector): Boolean {
-                    scaleFactor = (scaleFactor * detector.scaleFactor).coerceIn(MIN_SCALE, MAX_SCALE)
-                    root.scaleX = scaleFactor
-                    root.scaleY = scaleFactor
-                    return true
-                }
-
-                override fun onScaleEnd(detector: ScaleGestureDetector) {
-                    overlayPrefs().edit().putFloat(PREF_SCALE, scaleFactor).apply()
-                }
-            }
-        )
-
-        root.setOnTouchListener { _, event ->
-            scaleDetector?.onTouchEvent(event)
-            event.pointerCount > 1
-        }
-        root.findViewById<android.view.View>(R.id.overlayDragHandle)
-            .setOnTouchListener(::onOverlayTouch)
         myWordView = root.findViewById(R.id.overlayMyWord)
+        myWordCompactView = root.findViewById(R.id.overlayMyWordCompact)
+        compactHintView = root.findViewById(R.id.overlayCompactHint)
         otherWordView = root.findViewById(R.id.overlayOtherWord)
+        maximizeBtn = root.findViewById(R.id.overlayMaximizeBtn)
+
+        setupOverlayTouch(root)
+        applyExpandedState()
         windowManager?.addView(root, layoutParams)
     }
 
-    private fun onOverlayTouch(_view: android.view.View, event: MotionEvent): Boolean {
-        if (event.pointerCount > 1) return false
+    private fun setupOverlayTouch(root: View) {
+        root.findViewById<View>(R.id.overlayDragArea).setOnTouchListener { _, event ->
+            onDragTouch(event)
+        }
+        maximizeBtn?.setOnClickListener { toggleMaximized() }
+    }
+
+    private fun toggleMaximized() {
+        isExpanded = !isExpanded
+        overlayPrefs().edit().putBoolean(PREF_EXPANDED, isExpanded).apply()
+        applyExpandedState()
+        layoutParams?.let { persistPosition(it.x, it.y) }
+    }
+
+    private fun applyExpandedState() {
+        val root = overlayView ?: return
+        val compact = root.findViewById<View>(R.id.overlayCompactBody)
+        val expanded = root.findViewById<View>(R.id.overlayExpandedBody)
+        compact.isVisible = !isExpanded
+        expanded.isVisible = isExpanded
+        maximizeBtn?.setImageResource(
+            if (isExpanded) R.drawable.ic_overlay_restore else R.drawable.ic_overlay_maximize
+        )
+        maximizeBtn?.contentDescription = getString(
+            if (isExpanded) R.string.overlay_restore else R.string.overlay_maximize
+        )
+        refreshWindowSize()
+    }
+
+    private fun refreshWindowSize() {
+        val root = overlayView ?: return
+        val params = layoutParams ?: return
+        val wm = windowManager ?: return
+        val widthPx = resources.getDimensionPixelSize(R.dimen.overlay_width)
+        params.width = widthPx
+        params.height = WindowManager.LayoutParams.WRAP_CONTENT
+        root.requestLayout()
+        try {
+            wm.updateViewLayout(root, params)
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun onDragTouch(event: MotionEvent): Boolean {
         val root = overlayView ?: return false
         val params = layoutParams ?: return false
         val wm = windowManager ?: return false
-        when (event.action) {
+        when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 dragStartX = event.rawX
                 dragStartY = event.rawY
@@ -141,8 +167,19 @@ class OverlayService : Service() {
                 }
                 return true
             }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                persistPosition(params.x, params.y)
+                return true
+            }
         }
         return false
+    }
+
+    private fun persistPosition(x: Int, y: Int) {
+        overlayPrefs().edit()
+            .putInt(PREF_POS_X, x)
+            .putInt(PREF_POS_Y, y)
+            .apply()
     }
 
     fun hideOverlay() {
@@ -150,8 +187,10 @@ class OverlayService : Service() {
         overlayView = null
         layoutParams = null
         myWordView = null
+        myWordCompactView = null
+        compactHintView = null
         otherWordView = null
-        scaleDetector = null
+        maximizeBtn = null
     }
 
     fun updateOverlay(
@@ -171,16 +210,30 @@ class OverlayService : Service() {
             others.isNotEmpty() -> RoleTextFormatter.formatOthersBubble(others)
             else -> ""
         }
+        val otherCount = when {
+            !plainMessage.isNullOrEmpty() -> 0
+            else -> others.size
+        }
         if (overlayView != null &&
             myWordView?.text?.toString() == myText.toString() &&
-            otherWordView?.text?.toString() == otherText.toString()
+            otherWordView?.text?.toString() == otherText.toString() &&
+            lastOtherCount == otherCount
         ) {
             return
         }
         if (overlayView == null) showOverlay()
+        lastOtherCount = otherCount
+
         myWordView?.text = myText
+        myWordCompactView?.text = myText
         otherWordView?.text = otherText
-        overlayView?.findViewById<android.widget.ScrollView>(R.id.overlayScroll)?.scrollTo(0, 0)
+        compactHintView?.text = when {
+            otherCount > 0 -> getString(R.string.overlay_word_count, otherCount)
+            !plainMessage.isNullOrEmpty() -> plainMessage
+            else -> getString(R.string.not_in_db)
+        }
+        overlayView?.findViewById<ScrollView>(R.id.overlayScroll)?.scrollTo(0, 0)
+        applyExpandedState()
     }
 
     private fun overlayPrefs() = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -212,9 +265,11 @@ class OverlayService : Service() {
 
         private const val LOADING = "…"
         private const val PREFS_NAME = "phaohn_overlay"
-        private const val PREF_SCALE = "scale"
-        private const val MIN_SCALE = 0.75f
-        private const val MAX_SCALE = 3f
+        private const val PREF_EXPANDED = "expanded"
+        private const val PREF_POS_X = "pos_x"
+        private const val PREF_POS_Y = "pos_y"
+        private const val DEFAULT_POS_X = 24
+        private const val DEFAULT_POS_Y = 180
 
         @Volatile
         private var instance: OverlayService? = null

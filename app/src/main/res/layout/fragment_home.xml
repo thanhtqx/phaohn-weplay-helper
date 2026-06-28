@@ -409,92 +409,94 @@
                             android:id="@+id/switchAutoVote"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp" />
+                            android:layout_marginStart="8dp"
+                            android:enabled="false" />
                     </LinearLayout>
 
-                    <com.google.android.material.chip.ChipGroup
-                        android:id="@+id/voteSeatGroup"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        app:chipSpacingHorizontal="4dp"
-                        app:chipSpacingVertical="4dp"
-                        app:selectionRequired="true"
-                        app:singleLine="false"
-                        app:singleSelection="true" />
+                        android:layout_marginTop="@dimen/vote_section_gap"
+                        android:background="@drawable/bg_vote_picker_panel"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="10dp">
 
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
-                </LinearLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="@string/vote_seat_section_label"
+                                android:textColor="@color/text_primary"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            app:cardBackgroundColor="@color/surface"
-            app:cardCornerRadius="14dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/card_stroke"
-            app:strokeWidth="1dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/vote_seat_section_range"
+                                android:textColor="@color/text_hint"
+                                android:textSize="11sp" />
+                        </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                        <com.google.android.material.chip.ChipGroup
+                            android:id="@+id/voteSeatGroup"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            app:chipSpacingHorizontal="@dimen/vote_chip_spacing"
+                            app:chipSpacingVertical="@dimen/vote_chip_spacing"
+                            app:selectionRequired="false"
+                            app:singleLine="false"
+                            app:singleSelection="true" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/lookup_label"
-                    android:textColor="@color/text_primary"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="10dp"
+                            android:background="@color/nav_indicator_stroke" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:background="@drawable/bg_search_field"
-                    android:orientation="vertical"
-                    android:padding="12dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
-                    <TextView
-                        android:id="@+id/lookupMyWord"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="@string/lookup_empty"
-                        android:textColor="@color/text_primary"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="@string/vote_tap_section_label"
+                                android:textColor="@color/text_primary"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
 
-                    <View
-                        android:layout_width="40dp"
-                        android:layout_height="1dp"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_marginVertical="8dp"
-                        android:background="@color/card_stroke" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/vote_tap_section_range"
+                                android:textColor="@color/text_hint"
+                                android:textSize="11sp" />
+                        </LinearLayout>
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="@string/other_word"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="10sp" />
-
-                    <TextView
-                        android:id="@+id/lookupOthers"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:gravity="center"
-                        android:lineSpacingExtra="4dp"
-                        android:minHeight="20dp"
-                        android:textColor="@color/spy"
-                        android:textSize="13sp" />
+                        <com.google.android.material.chip.ChipGroup
+                            android:id="@+id/voteTapAtGroup"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            app:chipSpacingHorizontal="@dimen/vote_chip_spacing"
+                            app:chipSpacingVertical="@dimen/vote_chip_spacing"
+                            app:selectionRequired="true"
+                            app:singleLine="false"
+                            app:singleSelection="true" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

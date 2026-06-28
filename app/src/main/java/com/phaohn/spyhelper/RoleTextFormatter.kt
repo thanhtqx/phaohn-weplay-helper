@@ -15,7 +15,7 @@ object RoleTextFormatter {
 
     fun bubbleColorForRole(role: WordRole): Int = when (role) {
         WordRole.CIVILIAN -> 0xFF90CAF9.toInt()
-        WordRole.SPY -> 0xFFFFAB40.toInt()
+        WordRole.SPY -> 0xFFFFCC80.toInt()
     }
 
     fun coloredWord(context: Context, word: String, role: WordRole): CharSequence {
@@ -45,7 +45,7 @@ object RoleTextFormatter {
         val sb = SpannableStringBuilder()
         others.forEachIndexed { index, entry ->
             if (index > 0) sb.append("\n")
-            sb.append("• ")
+            sb.append("  ◦  ")
             val wordStart = sb.length
             sb.append(entry.word)
             sb.setSpan(

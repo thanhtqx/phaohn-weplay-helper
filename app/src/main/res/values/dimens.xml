@@ -20,5 +20,14 @@
     <dimen name="table_text">11sp</dimen>
     <dimen name="table_header_text">10sp</dimen>
     <dimen name="table_row_pad">6dp</dimen>
-    <dimen name="vote_seat_chip_height">30dp</dimen>
+    <dimen name="vote_seat_chip_height">32dp</dimen>
+    <dimen name="vote_chip_spacing">6dp</dimen>
+    <dimen name="vote_section_gap">10dp</dimen>
+
+    <dimen name="overlay_radius">12dp</dimen>
+    <dimen name="overlay_title_height">34dp</dimen>
+    <dimen name="overlay_width">220dp</dimen>
+    <dimen name="overlay_list_height">180dp</dimen>
+    <dimen name="overlay_pad_h">10dp</dimen>
+    <dimen name="overlay_pad_v">8dp</dimen>
 </resources>

@@ -8,17 +8,24 @@ import android.view.accessibility.AccessibilityNodeInfo
 
 object AccessibilityTapHelper {
 
-    private const val TAP_DURATION_MS = 20L
+    private const val TAP_DURATION_MS = 50L
 
     fun tapNode(service: AccessibilityService, node: AccessibilityNodeInfo): Boolean {
-        if (!node.isEnabled || !node.isVisibleToUser) return false
+        if (!node.isEnabled) return false
+        node.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS)
         if (node.isClickable && node.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
             return true
         }
         if (tapBounds(service, node)) return true
         var parent = node.parent
         while (parent != null) {
-            if (parent.isClickable && parent.isEnabled && parent.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
+            if (parent.isEnabled && parent.isClickable &&
+                parent.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+            ) {
+                parent.recycle()
+                return true
+            }
+            if (tapBounds(service, parent)) {
                 parent.recycle()
                 return true
             }
@@ -33,8 +40,21 @@ object AccessibilityTapHelper {
         val rect = Rect()
         node.getBoundsInScreen(rect)
         if (rect.width() <= 0 || rect.height() <= 0) return false
-        return dispatchTap(service, rect.exactCenterX(), rect.exactCenterY())
+        return tapAt(service, rect.exactCenterX(), rect.exactCenterY())
     }
+
+    /** Tap dải «bỏ phiếu» phía dưới avatar (vote_btn thường nằm sát đáy khung ghế). */
+    fun tapBoundsBottomStrip(service: AccessibilityService, node: AccessibilityNodeInfo): Boolean {
+        val rect = Rect()
+        node.getBoundsInScreen(rect)
+        if (rect.width() <= 0 || rect.height() <= 0) return false
+        val x = rect.exactCenterX()
+        val y = rect.bottom - rect.height() * 0.15f
+        return tapAt(service, x, y)
+    }
+
+    fun tapAt(service: AccessibilityService, x: Float, y: Float): Boolean =
+        dispatchTap(service, x, y)
 
     private fun dispatchTap(service: AccessibilityService, x: Float, y: Float): Boolean {
         val path = Path().apply { moveTo(x, y) }

@@ -36,6 +36,7 @@ class MainActivity : AppCompatActivity() {
                     refreshHomeUi()
                 }
                 SpyAccessibilityService.ACTION_LOOKUP -> updateLookup(intent)
+
             }
         }
     }
@@ -160,6 +161,7 @@ class MainActivity : AppCompatActivity() {
         val filter = IntentFilter().apply {
             addAction(SpyAccessibilityService.ACTION_PAIRS_UPDATED)
             addAction(SpyAccessibilityService.ACTION_LOOKUP)
+
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(receiver, filter, RECEIVER_NOT_EXPORTED)
@@ -181,13 +183,8 @@ class MainActivity : AppCompatActivity() {
         homeFragment?.refreshDashboard()
     }
 
-    private fun updateLookup(intent: Intent) {
-        val my = intent.getStringExtra(SpyAccessibilityService.EXTRA_MY_WORD).orEmpty()
-        val myRole = WordRole.fromName(intent.getStringExtra(SpyAccessibilityService.EXTRA_MY_ROLE))
-        val others = RoleTextFormatter.decodeOthers(intent.getStringExtra(SpyAccessibilityService.EXTRA_OTHERS_ROLES))
-        homeFragment?.setLookup(my, myRole, others)
+    private fun updateLookup(@Suppress("UNUSED_PARAMETER") intent: Intent) {
         historyFragment?.loadHistory()
-        refreshHomeUi()
     }
 
     private data class NavTab(
