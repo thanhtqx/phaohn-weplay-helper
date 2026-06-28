@@ -36,7 +36,7 @@ class HomeFragment : Fragment() {
         repository = PhaoHNApp.repo(requireActivity().application)
 
         binding.rowAccessibility.setOnClickListener {
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            AccessibilitySetupHelper.openAccessibilityFlow(this)
         }
         binding.rowOverlay.setOnClickListener {
             if (!Settings.canDrawOverlays(requireContext())) {
@@ -96,6 +96,9 @@ class HomeFragment : Fragment() {
         val off = getString(R.string.status_off)
 
         setPermRow(binding.dotAccessibility, binding.statusAccessibility, perm.accessibility, on, off)
+        if (!perm.accessibility && AccessibilitySetupHelper.needsRestrictedSettingsUnlock(ctx)) {
+            binding.statusAccessibility.text = getString(R.string.accessibility_restricted_hint)
+        }
         setPermRow(binding.dotOverlay, binding.statusOverlay, perm.overlay, on, off)
         setPermRow(binding.dotNotification, binding.statusNotification, perm.notification, on, off)
 
