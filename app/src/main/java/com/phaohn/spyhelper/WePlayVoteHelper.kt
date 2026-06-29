@@ -8,8 +8,19 @@ object WePlayVoteHelper {
     private val TIMER_PATTERN = Regex("""(\d+)s""")
     const val VOTE_TIMER_MAX_SEC = 20
 
-    fun readTimerSeconds(root: AccessibilityNodeInfo): Int? =
-        parseTimerSeconds(textById(root, WePlayIds.TIMER_TV))
+    fun readTimerSeconds(root: AccessibilityNodeInfo): Int? {
+        val nodes = root.findAccessibilityNodeInfosByViewId(WePlayIds.TIMER_TV)
+        try {
+            var best: Int? = null
+            for (node in nodes) {
+                val sec = parseTimerSeconds(node.text?.toString()) ?: continue
+                if (best == null || sec < best) best = sec
+            }
+            return best
+        } finally {
+            nodes.forEach { it.recycle() }
+        }
+    }
 
     /**
      * Đang bỏ phiếu: có «bỏ phiếu» trên avatar VÀ timer đếm 0–20s.
@@ -47,16 +58,15 @@ object WePlayVoteHelper {
     }
 
     fun parseTimerSeconds(timerText: String?): Int? {
-        val match = TIMER_PATTERN.find(timerText.orEmpty()) ?: return null
-        return match.groupValues[1].toIntOrNull()
-    }
-
-    private fun textById(root: AccessibilityNodeInfo, viewId: String): String? {
-        val nodes = root.findAccessibilityNodeInfosByViewId(viewId)
-        try {
-            return nodes.firstOrNull()?.text?.toString()
-        } finally {
-            nodes.forEach { it.recycle() }
+        val raw = timerText?.trim().orEmpty()
+        if (raw.isEmpty() || raw == "--") return null
+        val compact = raw.replace(" ", "")
+        TIMER_PATTERN.find(compact)?.groupValues?.get(1)?.toIntOrNull()?.let { sec ->
+            if (sec in 0..VOTE_TIMER_MAX_SEC) return sec
         }
+        if (compact.endsWith("s", ignoreCase = true)) {
+            compact.dropLast(1).toIntOrNull()?.takeIf { it in 0..VOTE_TIMER_MAX_SEC }?.let { return it }
+        }
+        return compact.toIntOrNull()?.takeIf { it in 0..VOTE_TIMER_MAX_SEC }
     }
 }

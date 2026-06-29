@@ -12,6 +12,8 @@ import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import com.phaohn.spyhelper.databinding.ActivityMainBinding
 import com.phaohn.spyhelper.databinding.ItemBottomNavBinding
@@ -51,6 +53,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setSupportActionBar(binding.toolbar)
+        setupBottomNavInsets()
 
         selectedNavId = savedInstanceState?.getInt(KEY_SELECTED_NAV, R.id.nav_home) ?: R.id.nav_home
         setupBottomNav()
@@ -76,6 +79,14 @@ class MainActivity : AppCompatActivity() {
     fun requestNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    private fun setupBottomNavInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.bottomNavBar) { view, insets ->
+            val navBar = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            view.setPadding(0, 0, 0, navBar.bottom)
+            insets
         }
     }
 
@@ -127,11 +138,9 @@ class MainActivity : AppCompatActivity() {
     private fun updateNavVisuals(itemId: Int) {
         val activeColor = ContextCompat.getColor(this, R.color.nav_active)
         val inactiveColor = ContextCompat.getColor(this, R.color.nav_inactive)
-        val liftPx = resources.getDimension(R.dimen.bottom_nav_active_lift)
         navTabs.forEach { tab ->
             val selected = tab.itemId == itemId
             tab.binding.navActiveBg.visibility = if (selected) View.VISIBLE else View.GONE
-            tab.binding.navContent.translationY = if (selected) liftPx else 0f
             tab.binding.navIcon.setImageResource(if (selected) tab.iconOn else tab.iconOff)
             tab.binding.navLabel.setTextColor(if (selected) activeColor else inactiveColor)
             tab.binding.navLabel.setTypeface(null, if (selected) Typeface.BOLD else Typeface.NORMAL)

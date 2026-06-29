@@ -3,6 +3,7 @@ package com.phaohn.spyhelper
 import android.accessibilityservice.AccessibilityService
 import android.graphics.Rect
 import android.view.accessibility.AccessibilityNodeInfo
+import kotlinx.coroutines.delay
 
 object WePlaySeatHelper {
 
@@ -102,14 +103,35 @@ object WePlaySeatHelper {
         return false
     }
 
-    fun tapSeatNumber(service: AccessibilityService, root: AccessibilityNodeInfo, seatNum: Int): Boolean {
+    fun tapSeatNumberOnce(service: AccessibilityService, root: AccessibilityNodeInfo, seatNum: Int): Boolean {
         if (seatNum !in 1..WePlayIds.SEAT_COUNT) return false
         val seat = WePlayIds.obtainSeatNode(root, seatNum) ?: return false
         try {
-            return tapVoteSeat(service, seat)
+            return tapVoteSeatOnce(service, seat)
         } finally {
             seat.recycle()
         }
+    }
+
+    /** Đột tử: tap 3 lần, mỗi lần lấy UI mới — không block bubble/tra cứu. */
+    suspend fun tapSeatNumberBurst(
+        service: AccessibilityService,
+        seatNum: Int,
+        obtainRoot: () -> AccessibilityNodeInfo?,
+    ): Boolean {
+        var ok = false
+        repeat(VOTE_BURST_TAP_COUNT) { i ->
+            val root = obtainRoot()
+            if (root != null) {
+                try {
+                    if (tapSeatNumberOnce(service, root, seatNum)) ok = true
+                } finally {
+                    root.recycle()
+                }
+            }
+            if (i < VOTE_BURST_TAP_COUNT - 1) delay(VOTE_BURST_INTERVAL_MS)
+        }
+        return ok
     }
 
     /** Ghế sẵn sàng bỏ phiếu: có `vote_view` / `vote_btn` (UI «bỏ phiếu»). */
@@ -225,8 +247,8 @@ object WePlaySeatHelper {
         return false
     }
 
-    /** Bỏ phiếu đột tử: tap vote_btn (dải dưới ghế) → vote_view → khung ghế. */
-    private fun tapVoteSeat(service: AccessibilityService, seat: AccessibilityNodeInfo): Boolean {
+    /** Bỏ phiếu: tap một lần vào vote_btn → vote_view → khung ghế. */
+    private fun tapVoteSeatOnce(service: AccessibilityService, seat: AccessibilityNodeInfo): Boolean {
         val voteBtn = findVoteControl(seat)
         try {
             if (voteBtn != null) {
@@ -313,4 +335,7 @@ object WePlaySeatHelper {
         }
         return null
     }
+
+    private const val VOTE_BURST_TAP_COUNT = 3
+    private const val VOTE_BURST_INTERVAL_MS = 80L
 }

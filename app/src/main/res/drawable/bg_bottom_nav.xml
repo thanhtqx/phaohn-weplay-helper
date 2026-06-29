@@ -3,27 +3,6 @@
     <item>
         <shape android:shape="rectangle">
             <solid android:color="@color/surface" />
-            <corners
-                android:bottomLeftRadius="0dp"
-                android:bottomRightRadius="0dp"
-                android:topLeftRadius="@dimen/bottom_nav_corner_radius"
-                android:topRightRadius="@dimen/bottom_nav_corner_radius" />
-        </shape>
-    </item>
-    <item
-        android:height="5dp"
-        android:gravity="top">
-        <shape android:shape="rectangle">
-            <gradient
-                android:angle="270"
-                android:endColor="#00000000"
-                android:startColor="#121A237E"
-                android:type="linear" />
-            <corners
-                android:bottomLeftRadius="0dp"
-                android:bottomRightRadius="0dp"
-                android:topLeftRadius="@dimen/bottom_nav_corner_radius"
-                android:topRightRadius="@dimen/bottom_nav_corner_radius" />
         </shape>
     </item>
     <item
@@ -31,11 +10,6 @@
         android:gravity="top">
         <shape android:shape="rectangle">
             <solid android:color="@color/nav_bar_stroke" />
-            <corners
-                android:bottomLeftRadius="0dp"
-                android:bottomRightRadius="0dp"
-                android:topLeftRadius="@dimen/bottom_nav_corner_radius"
-                android:topRightRadius="@dimen/bottom_nav_corner_radius" />
         </shape>
     </item>
 </layer-list>

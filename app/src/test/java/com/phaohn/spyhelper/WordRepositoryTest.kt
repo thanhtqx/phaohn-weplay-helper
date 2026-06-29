@@ -32,6 +32,31 @@ class WordRepositoryTest {
     }
 
     @Test
+    fun savePairRejectsSwappedDuplicate() = runBlocking {
+        assertTrue(repository.savePair("bếp lửa", "bếp gas"))
+        assertEquals(1, repository.pairCount())
+
+        assertTrue(!repository.savePair("bếp gas", "bếp lửa"))
+        assertEquals(1, repository.pairCount())
+    }
+
+    @Test
+    fun addManualReportsSwappedDuplicate() = runBlocking {
+        repository.addManual("bếp lửa", "bếp gas")
+        val result = repository.addManual("bếp gas", "bếp lửa")
+        assertEquals(0, result.added)
+        assertEquals(1, result.duplicate)
+    }
+
+    @Test
+    fun autoSavePathRejectsSwappedDuplicate() = runBlocking {
+        repository.savePair("dân", "gián")
+        val saved = repository.savePair("gián", "dân")
+        assertTrue(!saved)
+        assertEquals(1, repository.pairCount())
+    }
+
+    @Test
     fun lookupMyTamReturnsAllSpyPairs() = runBlocking {
         val spies = listOf("1", "2", "3", "4", "5", "66", "6")
         repository.importPairs(spies.map { "Mỹ Tâm" to it })

@@ -1,15 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="bottom_nav_height">42dp</dimen>
-    <dimen name="bottom_nav_bar_height">48dp</dimen>
-    <dimen name="bottom_nav_overflow_pad">6dp</dimen>
-    <dimen name="bottom_nav_corner_radius">16dp</dimen>
-    <dimen name="bottom_nav_active_radius">14dp</dimen>
-    <dimen name="bottom_nav_active_lift">-8dp</dimen>
-    <dimen name="bottom_nav_icon">20dp</dimen>
-    <dimen name="bottom_nav_icon_label_gap">1dp</dimen>
-    <dimen name="bottom_nav_pad_v">2dp</dimen>
-    <dimen name="bottom_nav_text">8sp</dimen>
+    <dimen name="bottom_nav_height">56dp</dimen>
+    <dimen name="bottom_nav_bar_height">56dp</dimen>
+    <dimen name="bottom_nav_overflow_pad">0dp</dimen>
+    <dimen name="bottom_nav_corner_radius">0dp</dimen>
+    <dimen name="bottom_nav_active_radius">18dp</dimen>
+    <dimen name="bottom_nav_active_lift">0dp</dimen>
+    <dimen name="bottom_nav_icon">22dp</dimen>
+    <dimen name="bottom_nav_icon_wrap">32dp</dimen>
+    <dimen name="bottom_nav_icon_label_gap">2dp</dimen>
+    <dimen name="bottom_nav_pad_v">5dp</dimen>
+    <dimen name="bottom_nav_text">10sp</dimen>
+    <dimen name="momo_icon_size">48dp</dimen>
+    <dimen name="momo_icon_glyph">26dp</dimen>
+    <dimen name="momo_icon_corner">14dp</dimen>
+    <dimen name="momo_card_corner">16dp</dimen>
+    <dimen name="momo_btn_corner">12dp</dimen>
     <dimen name="search_height">34dp</dimen>
     <dimen name="search_icon">14dp</dimen>
     <dimen name="search_text">12sp</dimen>
@@ -20,7 +26,7 @@
     <dimen name="table_text">11sp</dimen>
     <dimen name="table_header_text">10sp</dimen>
     <dimen name="table_row_pad">6dp</dimen>
-    <dimen name="vote_seat_chip_height">32dp</dimen>
+    <dimen name="vote_seat_chip_height">36dp</dimen>
     <dimen name="vote_chip_spacing">6dp</dimen>
     <dimen name="vote_section_gap">10dp</dimen>
 

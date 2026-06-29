@@ -36,14 +36,14 @@
 
         <TextView
             android:id="@+id/navLabel"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/bottom_nav_icon_label_gap"
             android:ellipsize="end"
             android:gravity="center"
-            android:includeFontPadding="false"
+            android:includeFontPadding="true"
             android:maxLines="1"
-            android:paddingHorizontal="2dp"
+            android:paddingHorizontal="1dp"
             android:textColor="@color/nav_inactive"
             android:textSize="@dimen/bottom_nav_text" />
     </LinearLayout>

@@ -26,7 +26,7 @@ class SpyAccessibilityService : AccessibilityService() {
     private var lastSpy: String? = null
     private var bubbleVisible = false
     private var hideJob: Job? = null
-    private var lastScanAt = 0L
+    private var lookupJob: Job? = null
     private var lastReadyClickAt = 0L
     private var lastSitClickAt = 0L
     private var lastSitSkipLogAt = 0L
@@ -64,8 +64,8 @@ class SpyAccessibilityService : AccessibilityService() {
         if (continuousScanJob?.isActive == true) return
         continuousScanJob = scope.launch {
             while (true) {
-                scanOnce()
-                delay(CONTINUOUS_POLL_MS)
+                val nextDelay = scanOnce()
+                delay(nextDelay)
             }
         }
     }
@@ -75,13 +75,15 @@ class SpyAccessibilityService : AccessibilityService() {
         continuousScanJob = null
     }
 
-    private fun scanOnce() {
-        val now = SystemClock.uptimeMillis()
-        if (now - lastScanAt < CONTINUOUS_POLL_MS) return
-        lastScanAt = now
-        val root = findWePlayRoot() ?: return
+    private fun scanOnce(): Long {
+        val root = findWePlayRoot() ?: run {
+            seatedInLobby = false
+            resetVoteState()
+            if (bubbleVisible) requestHide()
+            return POLL_NO_WEPLAY_MS
+        }
         try {
-            scanTree(root)
+            return scanTree(root)
         } finally {
             root.recycle()
         }
@@ -128,13 +130,13 @@ class SpyAccessibilityService : AccessibilityService() {
         return score
     }
 
-    private fun scanTree(root: AccessibilityNodeInfo) {
+    private fun scanTree(root: AccessibilityNodeInfo): Long {
         if (root.packageName?.toString() != WePlayIds.PACKAGE) {
             seatedInLobby = false
             resetVoteState()
             clearRoomSeatCountIfNeeded()
             if (bubbleVisible) requestHide()
-            return
+            return POLL_IDLE_MS
         }
 
         maybeDetectRoomSeatCount(root)
@@ -145,7 +147,7 @@ class SpyAccessibilityService : AccessibilityService() {
             resetVoteState()
             maybeSavePairAndClose(root, civilian, spy)
             performHide()
-            return
+            return POLL_LOBBY_MS
         }
 
         val selfWord = WordParser.parseSelfWord(textById(root, WePlayIds.SELF_WORD))
@@ -164,7 +166,11 @@ class SpyAccessibilityService : AccessibilityService() {
 
         if (inGame || voteUi) {
             maybeAutoVote(root)
-            return
+            return when {
+                voteRoundActive || voteTapInProgress || voteUi -> POLL_VOTE_MS
+                selfWord != null || lastSelfWord != null -> POLL_GAME_MS
+                else -> POLL_LOBBY_MS
+            }
         }
 
         if (WePlaySeatHelper.canAutoSit(root)) {
@@ -176,7 +182,7 @@ class SpyAccessibilityService : AccessibilityService() {
             seatedInLobby = seated
             if (!seated) maybeAutoSit(root)
             maybeAutoReady(root)
-            return
+            return POLL_LOBBY_MS
         }
         if (!voteRoundActive) resetVoteState()
         lastSelfWord = null
@@ -185,6 +191,7 @@ class SpyAccessibilityService : AccessibilityService() {
         maybeAutoSit(root)
         maybeAutoReady(root)
         if (bubbleVisible) requestHide()
+        return POLL_IDLE_MS
     }
 
     private fun maybeDetectRoomSeatCount(root: AccessibilityNodeInfo) {
@@ -281,55 +288,85 @@ class SpyAccessibilityService : AccessibilityService() {
 
         if (voteRoundActive && markVoteUiGone(root)) return
 
-        if (!WePlayVoteHelper.isVotePhaseActive(root)) {
-            if (voteRoundActive) {
-                if (markVoteUiGone(root)) return
-            } else {
-                voteUiGoneStreak = 0
-                val timer = WePlayVoteHelper.readTimerSeconds(root)
-                val now = SystemClock.uptimeMillis()
-                if (now - lastVoteSkipLogAt > VOTE_SKIP_LOG_INTERVAL_MS &&
-                    WePlaySeatHelper.hasVoteUiReady(root)
-                ) {
-                    lastVoteSkipLogAt = now
-                    Log.d(TAG, "vote UI seen, waiting timer (now=${timer}s)")
+        val voteUi = WePlaySeatHelper.hasVoteUiReady(root)
+        val timerSec = WePlayVoteHelper.readTimerSeconds(root)
+        val countdown = timerSec != null && timerSec in 0..WePlayVoteHelper.VOTE_TIMER_MAX_SEC
+
+        if (voteUi && (countdown || voteRoundActive)) {
+            voteUiGoneStreak = 0
+            if (!voteRoundActive) {
+                if (!countdown) {
+                    logVoteWaiting(timerSec)
+                    return
                 }
+                voteTappedThisRound = false
+                voteTimerZeroSeen = false
+                Log.d(TAG, "vote phase active timer=${timerSec}s")
+                voteRoundActive = true
             }
+            attemptVoteTap(root)
             return
         }
 
-        voteUiGoneStreak = 0
-
-        val timerSec = WePlayVoteHelper.readTimerSeconds(root)
-        if (!voteRoundActive) {
-            voteTappedThisRound = false
-            voteTimerZeroSeen = false
-            Log.d(TAG, "vote phase active timer=${timerSec}s")
+        if (voteRoundActive) {
+            if (markVoteUiGone(root)) return
+        } else {
+            voteUiGoneStreak = 0
+            if (voteUi) logVoteWaiting(timerSec)
         }
-        voteRoundActive = true
-        attemptVoteTap(root)
+    }
+
+    private fun logVoteWaiting(timerSec: Int?) {
+        val now = SystemClock.uptimeMillis()
+        if (now - lastVoteSkipLogAt <= VOTE_SKIP_LOG_INTERVAL_MS) return
+        lastVoteSkipLogAt = now
+        Log.d(TAG, "vote UI seen, waiting timer (now=${timerSec ?: "?"}s)")
     }
 
     private fun attemptVoteTap(root: AccessibilityNodeInfo) {
         if (voteTappedThisRound || !voteRoundActive || voteTapInProgress) return
-        if (markVoteUiGone(root)) return
-        if (!WePlayVoteHelper.isVotePhaseActive(root)) return
+        if (!WePlaySeatHelper.hasVoteUiReady(root)) return
 
         val seat = SpyPrefs.voteTargetSeat(applicationContext)
         val tapAtSec = SpyPrefs.voteTapAtSeconds(applicationContext)
         val timerRaw = textById(root, WePlayIds.TIMER_TV)
-        val timerSec = WePlayVoteHelper.parseTimerSeconds(timerRaw) ?: return
-        lastTimerSec = timerSec
+        val timerSec = WePlayVoteHelper.parseTimerSeconds(timerRaw)
 
-        if (timerSec > tapAtSec) {
-            voteTimerZeroSeen = false
-            return
-        }
+        if (!shouldFireVoteTap(timerSec, tapAtSec, timerRaw)) return
+
         if (!voteTimerZeroSeen) {
             voteTimerZeroSeen = true
-            Log.d(TAG, "timer=${timerSec}s ($timerRaw), tap ngay @ ${tapAtSec}s")
+            val shown = timerSec?.toString() ?: lastTimerSec?.toString() ?: "?"
+            Log.d(TAG, "timer=${shown}s ($timerRaw), tap @ ${tapAtSec}s")
         }
         performVoteTap(root, seat)
+    }
+
+    /**
+     * tapAt=0: chỉ tap đúng 0s (hoặc fallback khi timer mất sau 1s).
+     * tapAt>0: tap ngay khi timer <= tapAt (ví dụ chọn 3 → tap lúc 3,2,1,0 lần đầu gặp).
+     */
+    private fun shouldFireVoteTap(timerSec: Int?, tapAtSec: Int, timerRaw: String?): Boolean {
+        when {
+            timerSec != null -> {
+                if (timerSec > tapAtSec) {
+                    voteTimerZeroSeen = false
+                    lastTimerSec = timerSec
+                    return false
+                }
+                lastTimerSec = timerSec
+                return tapAtSec > 0 || timerSec == 0
+            }
+            tapAtSec == 0 -> {
+                val prev = lastTimerSec
+                if (prev != null && prev <= 1) {
+                    Log.d(TAG, "0s fallback: timer unreadable ($timerRaw) sau ${prev}s")
+                    return true
+                }
+                return false
+            }
+            else -> return false
+        }
     }
 
     private fun performVoteTap(root: AccessibilityNodeInfo, seat: Int) {
@@ -338,15 +375,21 @@ class SpyAccessibilityService : AccessibilityService() {
         if (now - lastVoteTapAt < VOTE_TAP_COOLDOWN_MS) return
         voteTapInProgress = true
         val seatRes = WePlayIds.seatResourceId(root, seat)
-        Log.d(TAG, "đột tử tap seat $seat ($seatRes) @ ${lastTimerSec}s")
-        val tapped = WePlaySeatHelper.tapSeatNumber(this, root, seat)
-        voteTapInProgress = false
-        if (tapped) {
-            lastVoteTapAt = now
-            voteTappedThisRound = true
-            Log.d(TAG, "tap seat $seat OK")
-        } else {
-            Log.d(TAG, "tap seat $seat FAILED — retry")
+        Log.d(TAG, "đột tử tap seat $seat ($seatRes) x3 @ ${lastTimerSec}s")
+        scope.launch {
+            val tapped = WePlaySeatHelper.tapSeatNumberBurst(
+                service = this@SpyAccessibilityService,
+                seatNum = seat,
+                obtainRoot = { findWePlayRoot() },
+            )
+            voteTapInProgress = false
+            if (tapped) {
+                lastVoteTapAt = now
+                voteTappedThisRound = true
+                Log.d(TAG, "tap seat $seat OK x3")
+            } else {
+                Log.d(TAG, "tap seat $seat FAILED — retry")
+            }
         }
     }
 
@@ -483,7 +526,8 @@ class SpyAccessibilityService : AccessibilityService() {
         if (selfWord == lastSelfWord && bubbleVisible) return
         lastSelfWord = selfWord
         showGameBubble(selfWord, null, emptyList())
-        scope.launch {
+        lookupJob?.cancel()
+        lookupJob = scope.launch {
             when (val result = repository.lookupOthers(selfWord)) {
                 is LookupResult.Found -> {
                     if (selfWord != lastSelfWord) return@launch
@@ -507,17 +551,22 @@ class SpyAccessibilityService : AccessibilityService() {
     override fun onDestroy() {
         stopContinuousScan()
         cancelPendingHide()
+        lookupJob?.cancel()
         scope.cancel()
         super.onDestroy()
     }
 
     companion object {
-        private const val CONTINUOUS_POLL_MS = 20L
+        private const val POLL_VOTE_MS = 16L
+        private const val POLL_GAME_MS = 40L
+        private const val POLL_LOBBY_MS = 100L
+        private const val POLL_IDLE_MS = 250L
+        private const val POLL_NO_WEPLAY_MS = 600L
         private const val HIDE_DEBOUNCE_MS = 800L
         private const val READY_CLICK_COOLDOWN_MS = 300L
         private const val SIT_CLICK_COOLDOWN_MS = 1000L
         private const val SIT_SKIP_LOG_INTERVAL_MS = 3000L
-        private const val VOTE_TAP_COOLDOWN_MS = 120L
+        private const val VOTE_TAP_COOLDOWN_MS = 350L
         private const val VOTE_SKIP_LOG_INTERVAL_MS = 3000L
         private const val VOTE_FINISH_MISS_STREAK = 3
         private const val TAG = "PhaoHN-Vote"

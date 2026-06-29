@@ -8,6 +8,7 @@ import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
+import android.util.DisplayMetrics
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -80,13 +81,24 @@ class OverlayService : Service() {
                 WindowManager.LayoutParams.TYPE_PHONE
             },
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
             val prefs = overlayPrefs()
-            x = prefs.getInt(PREF_POS_X, DEFAULT_POS_X)
-            y = prefs.getInt(PREF_POS_Y, DEFAULT_POS_Y)
+            val saved = clampPosition(
+                prefs.getInt(PREF_POS_X, DEFAULT_POS_X),
+                prefs.getInt(PREF_POS_Y, DEFAULT_POS_Y),
+                overlayWidth,
+                estimateOverlayHeight(),
+            )
+            x = saved.first
+            y = saved.second
         }
         val root = LayoutInflater.from(applicationContext).inflate(R.layout.overlay_spy_word, null)
         overlayView = root.apply { alpha = 1f }
@@ -100,6 +112,7 @@ class OverlayService : Service() {
         setupOverlayTouch(root)
         applyExpandedState()
         windowManager?.addView(root, layoutParams)
+        root.post { syncOverlayBounds() }
     }
 
     private fun setupOverlayTouch(root: View) {
@@ -141,6 +154,46 @@ class OverlayService : Service() {
         root.requestLayout()
         try {
             wm.updateViewLayout(root, params)
+            root.post { syncOverlayBounds() }
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun estimateOverlayHeight(): Int {
+        val title = resources.getDimensionPixelSize(R.dimen.overlay_title_height)
+        val pad = resources.getDimensionPixelSize(R.dimen.overlay_pad_v)
+        val compactBody = (resources.displayMetrics.density * 52f).toInt()
+        val expandedBody = resources.getDimensionPixelSize(R.dimen.overlay_list_height) +
+            (resources.displayMetrics.density * 96f).toInt()
+        val body = if (isExpanded) expandedBody else compactBody
+        return title + body + pad * 2
+    }
+
+    private fun clampPosition(x: Int, y: Int, width: Int, height: Int): Pair<Int, Int> {
+        val metrics: DisplayMetrics = resources.displayMetrics
+        val maxX = (metrics.widthPixels - width).coerceAtLeast(0)
+        val maxY = (metrics.heightPixels - height).coerceAtLeast(0)
+        val safeTop = (metrics.density * 24f).toInt()
+        val safeBottom = (metrics.density * 72f).toInt()
+        val clampedX = x.coerceIn(0, maxX)
+        val clampedY = y.coerceIn(safeTop, (maxY - safeBottom).coerceAtLeast(safeTop))
+        return clampedX to clampedY
+    }
+
+    private fun syncOverlayBounds() {
+        val root = overlayView ?: return
+        val params = layoutParams ?: return
+        val wm = windowManager ?: return
+        val width = params.width.takeIf { it > 0 }
+            ?: resources.getDimensionPixelSize(R.dimen.overlay_width)
+        val height = root.height.takeIf { it > 0 } ?: estimateOverlayHeight()
+        val clamped = clampPosition(params.x, params.y, width, height)
+        if (clamped.first == params.x && clamped.second == params.y) return
+        params.x = clamped.first
+        params.y = clamped.second
+        try {
+            wm.updateViewLayout(root, params)
+            persistPosition(params.x, params.y)
         } catch (_: Exception) {
         }
     }
@@ -168,6 +221,7 @@ class OverlayService : Service() {
                 return true
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                syncOverlayBounds()
                 persistPosition(params.x, params.y)
                 return true
             }
@@ -234,6 +288,7 @@ class OverlayService : Service() {
         }
         overlayView?.findViewById<ScrollView>(R.id.overlayScroll)?.scrollTo(0, 0)
         applyExpandedState()
+        overlayView?.post { syncOverlayBounds() }
     }
 
     private fun overlayPrefs() = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

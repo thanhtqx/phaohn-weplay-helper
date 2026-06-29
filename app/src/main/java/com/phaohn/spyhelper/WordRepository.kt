@@ -41,7 +41,7 @@ class WordRepository(
         true
     }
 
-    /** Ghi DB: trùng chỉ khi cả hai từ khớp tuyệt đối — không khác một ký tự nào. */
+    /** Ghi DB: trùng khi hai từ khớp tuyệt đối, kể cả đảo vai dân/gián. */
     private suspend fun tryInsertPair(civilian: String, spy: String): InsertStatus {
         if (civilian.isEmpty() || spy.isEmpty()) return InsertStatus.EMPTY
         if (civilian == spy) return InsertStatus.SAME_WORD

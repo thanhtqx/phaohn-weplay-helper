@@ -41,9 +41,20 @@
     </style>
 
     <style name="LookupButton" parent="Widget.Material3.Button">
-        <item name="android:minHeight">34dp</item>
-        <item name="android:paddingHorizontal">12dp</item>
+        <item name="android:minHeight">36dp</item>
+        <item name="android:paddingHorizontal">16dp</item>
         <item name="android:textSize">12sp</item>
-        <item name="cornerRadius">10dp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:background">@drawable/bg_momo_primary_btn</item>
+        <item name="backgroundTint">@null</item>
+        <item name="cornerRadius">@dimen/momo_btn_corner</item>
+        <item name="elevation">2dp</item>
+    </style>
+
+    <style name="MomoCard" parent="">
+        <item name="cardCornerRadius">@dimen/momo_card_corner</item>
+        <item name="cardElevation">2dp</item>
+        <item name="cardBackgroundColor">@color/surface</item>
     </style>
 </resources>
