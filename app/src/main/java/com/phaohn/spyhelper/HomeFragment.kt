@@ -39,10 +39,10 @@ class HomeFragment : Fragment() {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         repository = PhaoHNApp.repo(requireActivity().application)
 
-        binding.permAccessibility.root.setOnClickListener {
+        binding.rowAccessibility.setOnClickListener {
             AccessibilitySetupHelper.openAccessibilityFlow(this)
         }
-        binding.permOverlay.root.setOnClickListener {
+        binding.rowOverlay.setOnClickListener {
             if (!Settings.canDrawOverlays(requireContext())) {
                 overlayLauncher.launch(
                     Intent(
@@ -52,7 +52,7 @@ class HomeFragment : Fragment() {
                 )
             }
         }
-        binding.permNotification.root.setOnClickListener {
+        binding.rowNotification.setOnClickListener {
             (activity as? MainActivity)?.requestNotificationPermission()
         }
         binding.switchAutoReady.isChecked = SpyPrefs.isAutoReadyEnabled(requireContext())
@@ -102,31 +102,12 @@ class HomeFragment : Fragment() {
         val on = getString(R.string.status_on)
         val off = getString(R.string.status_off)
 
-        setPermRow(
-            binding.permAccessibility.dotAccessibility,
-            binding.permAccessibility.statusAccessibility,
-            perm.accessibility,
-            on,
-            off,
-        )
+        setPermRow(binding.dotAccessibility, binding.statusAccessibility, perm.accessibility, on, off)
         if (!perm.accessibility && AccessibilitySetupHelper.needsRestrictedSettingsUnlock(ctx)) {
-            binding.permAccessibility.statusAccessibility.text =
-                getString(R.string.accessibility_restricted_hint)
+            binding.statusAccessibility.text = getString(R.string.accessibility_restricted_hint)
         }
-        setPermRow(
-            binding.permOverlay.dotOverlay,
-            binding.permOverlay.statusOverlay,
-            perm.overlay,
-            on,
-            off,
-        )
-        setPermRow(
-            binding.permNotification.dotNotification,
-            binding.permNotification.statusNotification,
-            perm.notification,
-            on,
-            off,
-        )
+        setPermRow(binding.dotOverlay, binding.statusOverlay, perm.overlay, on, off)
+        setPermRow(binding.dotNotification, binding.statusNotification, perm.notification, on, off)
 
         if (perm.allGranted) {
             binding.readyChip.setBackgroundResource(R.drawable.bg_ready_hero_ok)
@@ -254,8 +235,8 @@ class HomeFragment : Fragment() {
             textSize = textSizeSp
             minHeight = 0
             chipMinHeight = resources.getDimension(R.dimen.vote_seat_chip_height)
-            chipCornerRadius = 12f * density
-            chipStrokeWidth = 1.5f * density
+            chipCornerRadius = 8f * density
+            chipStrokeWidth = density
             isClickable = true
             setEnsureMinTouchTargetSize(false)
             textAlignment = View.TEXT_ALIGNMENT_CENTER
@@ -337,13 +318,13 @@ class HomeFragment : Fragment() {
         chips.forEach { chip ->
             val num = chip.text.toString().toIntOrNull()
             val active = num == selected && (!requirePositive || selected > 0)
-            chip.chipStrokeWidth = if (active) 0f else density * 1.5f
+            chip.chipStrokeWidth = if (active) density * 2.5f else density
             chip.typeface = if (active) {
                 android.graphics.Typeface.DEFAULT_BOLD
             } else {
                 android.graphics.Typeface.DEFAULT
             }
-            chip.elevation = if (active) density * 3f else density * 0.5f
+            chip.elevation = if (active) density * 2f else 0f
             chip.refreshDrawableState()
         }
     }

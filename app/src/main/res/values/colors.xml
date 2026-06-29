@@ -25,17 +25,6 @@
     <color name="nav_bar_stroke">#DDE3F0</color>
     <color name="nav_ripple">#221565C0</color>
 
-    <color name="momo_nav_icon_bg">#E8EAF6</color>
-    <color name="momo_ripple">#1A3949AB</color>
-    <color name="momo_icon_blue_bg">#E3F2FD</color>
-    <color name="momo_icon_orange_bg">#FFF3E0</color>
-    <color name="momo_icon_green_bg">#E8F5E9</color>
-    <color name="momo_icon_purple_bg">#EDE7F6</color>
-    <color name="momo_icon_teal_bg">#E0F7FA</color>
-    <color name="momo_icon_red_bg">#FFEBEE</color>
-    <color name="momo_icon_teal">#00838F</color>
-    <color name="momo_card_shadow">#14000000</color>
-
     <color name="overlay_bg">#B3283558</color>
     <color name="overlay_divider">#33FFFFFF</color>
     <color name="overlay_control_normal">#18FFFFFF</color>
