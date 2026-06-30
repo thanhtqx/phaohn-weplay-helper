@@ -21,8 +21,8 @@ android {
         applicationId = "com.phaohn.spyhelper"
         minSdk = 26
         targetSdk = 34
-        versionCode = 16
-        versionName = "1.8.4"
+        versionCode = 38
+        versionName = "2.3.7"
     }
 
     signingConfigs {
@@ -60,6 +60,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 

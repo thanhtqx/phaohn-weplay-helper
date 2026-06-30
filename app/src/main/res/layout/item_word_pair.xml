@@ -49,6 +49,16 @@
         android:orientation="horizontal">
 
         <ImageButton
+            android:id="@+id/btnReport"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/report"
+            android:padding="4dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_report" />
+
+        <ImageButton
             android:id="@+id/btnEdit"
             android:layout_width="28dp"
             android:layout_height="28dp"

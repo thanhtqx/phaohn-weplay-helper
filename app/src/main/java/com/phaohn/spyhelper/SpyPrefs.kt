@@ -11,6 +11,9 @@ object SpyPrefs {
     private const val KEY_VOTE_TAP_AT = "vote_tap_at"
     private const val KEY_VOTE_SEAT_CHOSEN = "vote_seat_chosen"
     private const val KEY_ROOM_SEAT_COUNT = "room_seat_count"
+    private const val KEY_SYNC_BASE_URL = "sync_base_url"
+
+    const val DEFAULT_SYNC_BASE_URL = "http://152.42.223.79"
 
     const val DEFAULT_VOTE_SEAT = 1
     const val VOTE_TAP_AT_MIN = 0
@@ -25,7 +28,7 @@ object SpyPrefs {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_AUTO_READY, enabled)
-            .apply()
+            .commit()
     }
 
     fun isAutoSitEnabled(context: Context): Boolean =
@@ -36,7 +39,7 @@ object SpyPrefs {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_AUTO_SIT, enabled)
-            .apply()
+            .commit()
     }
 
     fun isAutoVoteEnabled(context: Context): Boolean =
@@ -47,7 +50,7 @@ object SpyPrefs {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_AUTO_VOTE, enabled)
-            .apply()
+            .commit()
     }
 
     fun voteTargetSeat(context: Context): Int =
@@ -94,6 +97,21 @@ object SpyPrefs {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit()
             .putInt(KEY_ROOM_SEAT_COUNT, count.coerceIn(0, WePlayIds.SEAT_COUNT))
+            .apply()
+    }
+
+    fun syncBaseUrl(context: Context): String =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString(KEY_SYNC_BASE_URL, DEFAULT_SYNC_BASE_URL)
+            ?.trim()
+            ?.trimEnd('/')
+            .orEmpty()
+            .ifEmpty { DEFAULT_SYNC_BASE_URL }
+
+    fun setSyncBaseUrl(context: Context, url: String) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_SYNC_BASE_URL, url.trim().trimEnd('/'))
             .apply()
     }
 }

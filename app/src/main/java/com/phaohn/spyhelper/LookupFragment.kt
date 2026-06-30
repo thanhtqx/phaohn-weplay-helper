@@ -10,11 +10,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.chip.Chip
 import com.phaohn.spyhelper.databinding.FragmentLookupBinding
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -62,7 +60,6 @@ class LookupFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        loadTopLookups()
         val current = binding.lookupInput.text?.toString().orEmpty()
         if (current.isNotEmpty()) {
             lifecycleScope.launch { performLookup(current, recordHistory = false) }
@@ -88,18 +85,16 @@ class LookupFragment : Fragment() {
 
     private suspend fun performLookup(query: String, recordHistory: Boolean) {
         when (val result = repository.lookupOthers(query)) {
-                is LookupResult.Found -> {
-                    showResult(result.myWord, result.myRole, result.otherWords)
-                    if (recordHistory) {
-                        repository.recordLookup(query, result.otherWordStrings)
-                        loadTopLookups()
-                    }
+            is LookupResult.Found -> {
+                showResult(result.myWord, result.myRole, result.otherWords)
+                if (recordHistory) {
+                    repository.recordLookup(query, result.otherWordStrings)
                 }
+            }
             is LookupResult.NotFound -> {
                 showNotFound(query)
                 if (recordHistory) {
                     repository.recordLookup(query, emptyList())
-                    loadTopLookups()
                 }
             }
             LookupResult.NotInGame -> Unit
@@ -109,39 +104,6 @@ class LookupFragment : Fragment() {
     private fun clearResults() {
         binding.resultCard.isVisible = false
         binding.lookupEmpty.isVisible = false
-    }
-
-    private fun loadTopLookups() {
-        if (_binding == null) return
-        lifecycleScope.launch {
-            val top = repository.topLookupWords(limit = 20)
-            binding.topLookupChips.removeAllViews()
-            val hasTop = top.isNotEmpty()
-            binding.topLookupChips.isVisible = hasTop
-            binding.topLookupEmpty.isVisible = !hasTop
-            binding.topLookupStats.isVisible = hasTop
-            if (hasTop) {
-                binding.topLookupStats.text = getString(R.string.lookup_top_count, top.sumOf { it.count })
-                val ctx = requireContext()
-                val chipBg = ContextCompat.getColorStateList(ctx, R.color.chip_lookup_bg)
-                val chipStroke = ContextCompat.getColorStateList(ctx, R.color.chip_lookup_stroke)
-                val chipText = ContextCompat.getColorStateList(ctx, R.color.chip_lookup_text)
-                top.forEach { item ->
-                    val chip = Chip(ctx).apply {
-                        text = getString(R.string.lookup_top_chip, item.myWord, item.count)
-                        isCheckable = false
-                        isClickable = true
-                        chipBackgroundColor = chipBg
-                        chipStrokeColor = chipStroke
-                        chipStrokeWidth = resources.displayMetrics.density
-                        setTextColor(chipText)
-                        textSize = 11f
-                        setOnClickListener { runLookup(item.myWord, recordHistory = true) }
-                    }
-                    binding.topLookupChips.addView(chip)
-                }
-            }
-        }
     }
 
     private fun showResult(myWord: String, myRole: WordRole, others: List<LabeledWord>) {

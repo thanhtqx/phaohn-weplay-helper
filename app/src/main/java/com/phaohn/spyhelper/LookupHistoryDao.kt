@@ -10,7 +10,10 @@ interface LookupHistoryDao {
     suspend fun insert(entry: LookupHistory): Long
 
     @Query("SELECT * FROM lookup_history ORDER BY playedAt DESC LIMIT :limit")
-    suspend fun recent(limit: Int = 200): List<LookupHistory>
+    suspend fun recent(limit: Int = 80): List<LookupHistory>
+
+    @Query("DELETE FROM lookup_history WHERE id IN (SELECT id FROM lookup_history ORDER BY playedAt ASC LIMIT :count)")
+    suspend fun deleteOldest(count: Int)
 
     @Query("SELECT COUNT(*) FROM lookup_history")
     suspend fun count(): Int

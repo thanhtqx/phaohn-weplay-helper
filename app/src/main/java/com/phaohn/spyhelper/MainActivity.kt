@@ -24,21 +24,25 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navTabs: List<NavTab>
 
     private var homeFragment: HomeFragment? = null
-    private var lookupFragment: LookupFragment? = null
-    private var wordListFragment: WordListFragment? = null
+    private var wordsHubFragment: WordsHubFragment? = null
+    private var autoFragment: AutoFragment? = null
     private var historyFragment: HistoryFragment? = null
-    private var aboutFragment: AboutFragment? = null
+    private var profileFragment: ProfileFragment? = null
+    private lateinit var auth: AuthManager
     private var selectedNavId = R.id.nav_home
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
                 SpyAccessibilityService.ACTION_PAIRS_UPDATED -> {
-                    wordListFragment?.loadPairs()
+                    wordsHubFragment?.refreshWordList()
                     refreshHomeUi()
                 }
+                SpyAccessibilityService.ACTION_AUTO_PREFS_CHANGED -> {
+                    autoFragment?.refreshAutoUi()
+                    OverlayService.refreshAutoUi()
+                }
                 SpyAccessibilityService.ACTION_LOOKUP -> updateLookup(intent)
-
             }
         }
     }
@@ -49,6 +53,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        auth = AuthManager(this)
+        if (!auth.isLoggedIn()) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -94,9 +104,9 @@ class MainActivity : AppCompatActivity() {
         navTabs = listOf(
             NavTab(R.id.nav_home, binding.navHome, R.drawable.ic_nav_home_on, R.drawable.ic_nav_home_off, R.string.nav_home),
             NavTab(R.id.nav_words, binding.navWords, R.drawable.ic_nav_words_on, R.drawable.ic_nav_words_off, R.string.nav_words),
-            NavTab(R.id.nav_lookup, binding.navLookup, R.drawable.ic_nav_lookup_on, R.drawable.ic_nav_lookup_off, R.string.nav_lookup),
+            NavTab(R.id.nav_auto, binding.navAuto, R.drawable.ic_nav_auto_on, R.drawable.ic_nav_auto_off, R.string.nav_auto),
             NavTab(R.id.nav_history, binding.navHistory, R.drawable.ic_nav_history_on, R.drawable.ic_nav_history_off, R.string.nav_history),
-            NavTab(R.id.nav_about, binding.navAbout, R.drawable.ic_nav_about_on, R.drawable.ic_nav_about_off, R.string.nav_about),
+            NavTab(R.id.nav_about, binding.navAbout, R.drawable.ic_nav_profile_on, R.drawable.ic_nav_profile_off, R.string.nav_profile),
         )
         navTabs.forEach { tab ->
             tab.binding.navLabel.setText(tab.labelRes)
@@ -116,21 +126,21 @@ class MainActivity : AppCompatActivity() {
                 homeFragment ?: HomeFragment.newInstance().also { homeFragment = it },
                 R.string.nav_home,
             )
-            R.id.nav_lookup -> showFragment(
-                lookupFragment ?: LookupFragment.newInstance().also { lookupFragment = it },
-                R.string.nav_lookup,
-            )
             R.id.nav_words -> showFragment(
-                wordListFragment ?: WordListFragment.newInstance().also { wordListFragment = it },
+                wordsHubFragment ?: WordsHubFragment.newInstance().also { wordsHubFragment = it },
                 R.string.nav_words,
+            )
+            R.id.nav_auto -> showFragment(
+                autoFragment ?: AutoFragment.newInstance().also { autoFragment = it },
+                R.string.nav_auto,
             )
             R.id.nav_history -> showFragment(
                 historyFragment ?: HistoryFragment.newInstance().also { historyFragment = it },
                 R.string.nav_history,
             )
             R.id.nav_about -> showFragment(
-                aboutFragment ?: AboutFragment.newInstance().also { aboutFragment = it },
-                R.string.nav_about,
+                profileFragment ?: ProfileFragment.newInstance().also { profileFragment = it },
+                R.string.nav_profile,
             )
         }
     }
@@ -151,9 +161,9 @@ class MainActivity : AppCompatActivity() {
         val titleRes = when (itemId) {
             R.id.nav_home -> R.string.nav_home
             R.id.nav_words -> R.string.nav_words
-            R.id.nav_lookup -> R.string.nav_lookup
+            R.id.nav_auto -> R.string.nav_auto
             R.id.nav_history -> R.string.nav_history
-            R.id.nav_about -> R.string.nav_about
+            R.id.nav_about -> R.string.nav_profile
             else -> R.string.nav_home
         }
         binding.toolbar.title = getString(titleRes)
@@ -169,8 +179,8 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         val filter = IntentFilter().apply {
             addAction(SpyAccessibilityService.ACTION_PAIRS_UPDATED)
+            addAction(SpyAccessibilityService.ACTION_AUTO_PREFS_CHANGED)
             addAction(SpyAccessibilityService.ACTION_LOOKUP)
-
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(receiver, filter, RECEIVER_NOT_EXPORTED)
@@ -179,7 +189,8 @@ class MainActivity : AppCompatActivity() {
             registerReceiver(receiver, filter)
         }
         refreshHomeUi()
-        wordListFragment?.loadPairs()
+        wordsHubFragment?.refreshWordList()
+        autoFragment?.refreshAutoUi()
         historyFragment?.loadHistory()
     }
 
@@ -192,7 +203,9 @@ class MainActivity : AppCompatActivity() {
         homeFragment?.refreshDashboard()
     }
 
-    private fun updateLookup(@Suppress("UNUSED_PARAMETER") intent: Intent) {
+    private fun updateLookup(intent: Intent) {
+        val word = intent.getStringExtra(SpyAccessibilityService.EXTRA_MY_WORD).orEmpty()
+        if (word.isEmpty()) return
         historyFragment?.loadHistory()
     }
 

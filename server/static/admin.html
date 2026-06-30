@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PhaoHN — Quản trị</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="admin-page">
+  <div class="admin-shell">
+    <aside class="admin-aside">
+      <a href="/" class="brand brand-light">
+        <span class="brand-mark">P</span>
+        <span class="brand-text">
+          <strong>Quản trị</strong>
+          <small id="adminUserLabel"></small>
+        </span>
+      </a>
+
+      <nav class="admin-menu" id="adminNav">
+        <button type="button" class="admin-menu-item active" data-tab="users">Tài khoản</button>
+        <button type="button" class="admin-menu-item" data-tab="reports">
+          Báo cáo
+          <span class="badge-dot hidden" id="reportsPendingBadge">0</span>
+        </button>
+      </nav>
+
+      <div class="admin-aside-foot">
+        <a href="/" class="admin-link-back">← Từ khóa</a>
+        <button type="button" class="btn btn-ghost-light" id="btnLogout">Thoát</button>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-head">
+        <h1 id="adminPageTitle">Tài khoản</h1>
+        <p id="adminPageSub">Tạo tài khoản, đổi mật khẩu và cấp nguồn từ.</p>
+      </header>
+
+      <section class="admin-section" id="adminPanelUsers">
+        <div class="panel panel-flat">
+          <h3 class="panel-label">Tạo tài khoản</h3>
+          <form id="createUserForm" class="admin-form-grid">
+            <label class="field">
+              Tên đăng nhập
+              <input id="newUsername" minlength="3" maxlength="64" required />
+            </label>
+            <label class="field">
+              Mật khẩu
+              <input id="newPassword" type="password" minlength="6" required />
+            </label>
+            <label class="field">
+              Vai trò
+              <select id="newRole">
+                <option value="user">Người dùng</option>
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+            <div class="admin-form-action">
+              <button type="submit" class="btn btn-primary">Tạo</button>
+            </div>
+          </form>
+          <p id="createUserError" class="alert alert-error hidden"></p>
+        </div>
+
+        <div class="panel panel-flat">
+          <h3 class="panel-label">Danh sách</h3>
+          <div id="adminUsers" class="user-grid"></div>
+        </div>
+      </section>
+
+      <section class="admin-section hidden" id="adminPanelReports">
+        <div class="panel panel-flat">
+          <h3 class="panel-label">Báo cáo từ khóa</h3>
+          <div class="table-wrap table-wrap-admin">
+            <table class="data-table data-table-admin">
+              <thead>
+                <tr>
+                  <th>Từ khóa</th>
+                  <th>Loại</th>
+                  <th>Người báo</th>
+                  <th>Trạng thái</th>
+                  <th class="th-actions">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="adminReports"></tbody>
+            </table>
+          </div>
+          <p id="adminReportsEmpty" class="text-muted hidden">Chưa có báo cáo.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="wordSourcesDialog" class="modal modal-wide">
+    <div class="modal-body">
+      <h2 class="modal-title" id="wordSourcesTitle">Nguồn từ</h2>
+      <p class="text-muted">Chọn tài khoản mà user được xem và dùng từ khóa.</p>
+      <div id="wordSourcesList" class="check-list"></div>
+      <p id="wordSourcesError" class="alert alert-error hidden"></p>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" id="btnWordSourcesCancel">Hủy</button>
+        <button type="button" class="btn btn-primary" id="btnWordSourcesSave">Lưu</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="/static/admin.js"></script>
+</body>
+</html>

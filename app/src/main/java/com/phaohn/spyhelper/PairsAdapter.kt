@@ -8,6 +8,7 @@ import com.phaohn.spyhelper.databinding.ItemWordPairBinding
 class PairsAdapter(
     private val onEdit: (WordPair) -> Unit,
     private val onDelete: (WordPair) -> Unit,
+    private val onReport: (WordPair) -> Unit,
 ) : RecyclerView.Adapter<PairsAdapter.VH>() {
 
     private val items = mutableListOf<WordPair>()
@@ -20,7 +21,7 @@ class PairsAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val binding = ItemWordPairBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return VH(binding, onEdit, onDelete)
+        return VH(binding, onEdit, onDelete, onReport)
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) = holder.bind(items[position])
@@ -31,6 +32,7 @@ class PairsAdapter(
         private val binding: ItemWordPairBinding,
         private val onEdit: (WordPair) -> Unit,
         private val onDelete: (WordPair) -> Unit,
+        private val onReport: (WordPair) -> Unit,
     ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(pair: WordPair) {
             binding.civilianText.text = pair.civilianWord
@@ -39,6 +41,7 @@ class PairsAdapter(
                 if (bindingAdapterPosition % 2 == 0) R.drawable.bg_table_row_grid
                 else R.drawable.bg_table_row_grid_alt
             )
+            binding.btnReport.setOnClickListener { onReport(pair) }
             binding.btnEdit.setOnClickListener { onEdit(pair) }
             binding.btnDelete.setOnClickListener { onDelete(pair) }
         }

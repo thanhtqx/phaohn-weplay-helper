@@ -6,7 +6,7 @@
     android:background="@color/background"
     android:orientation="vertical"
     android:paddingHorizontal="12dp"
-    android:paddingTop="12dp">
+    android:paddingTop="6dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -30,7 +30,7 @@
             android:layout_weight="1"
             android:background="@android:color/transparent"
             android:gravity="center_vertical"
-            android:hint="@string/search_words"
+            android:hint="@string/words_search_hint"
             android:imeOptions="actionSearch"
             android:inputType="text"
             android:maxLines="1"
@@ -50,12 +50,80 @@
             android:textColor="@color/primary"
             android:textSize="10sp"
             android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btnLookup"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/lookup_btn"
+            android:padding="5dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_search" />
     </LinearLayout>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/lookupResultCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="@color/surface"
+        app:cardCornerRadius="10dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/card_stroke"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="8dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/lookupMyWord"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/lookupResults"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:lineSpacingExtra="2dp"
+                    android:textColor="@color/spy"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/btnCloseLookup"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/close"
+                android:padding="4dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_close"
+                app:tint="@color/text_hint" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="8dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
@@ -63,6 +131,17 @@
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="1" />
+
+        <ImageButton
+            android:id="@+id/btnSync"
+            android:layout_width="@dimen/sync_action_size"
+            android:layout_height="@dimen/sync_action_size"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/sync_cloud"
+            android:padding="@dimen/sync_action_padding"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_sync"
+            app:tint="@color/primary" />
 
         <ImageButton
             android:id="@+id/btnImport"

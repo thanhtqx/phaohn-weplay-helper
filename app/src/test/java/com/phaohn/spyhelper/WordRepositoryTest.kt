@@ -57,6 +57,22 @@ class WordRepositoryTest {
     }
 
     @Test
+    fun lookupRequiresExactMatch() = runBlocking {
+        repository.savePair("Phở", "Bún")
+        assertTrue(repository.lookupOthers("Phở") is LookupResult.Found)
+        assertTrue(repository.lookupOthers("phở") is LookupResult.NotFound)
+        assertTrue(repository.lookupOthers("Phở ") is LookupResult.NotFound)
+    }
+
+    @Test
+    fun searchPairsRequiresExactMatch() = runBlocking {
+        repository.savePair("Phở", "Bún")
+        assertEquals(1, repository.searchPairs("Phở").size)
+        assertEquals(0, repository.searchPairs("Ph").size)
+        assertEquals(0, repository.searchPairs("phở").size)
+    }
+
+    @Test
     fun lookupMyTamReturnsAllSpyPairs() = runBlocking {
         val spies = listOf("1", "2", "3", "4", "5", "66", "6")
         repository.importPairs(spies.map { "Mỹ Tâm" to it })

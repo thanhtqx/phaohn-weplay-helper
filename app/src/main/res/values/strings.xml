@@ -20,13 +20,35 @@
     <string name="overlay_window_title">PhaoHN</string>
     <string name="overlay_maximize">Phóng to cửa sổ</string>
     <string name="overlay_restore">Thu nhỏ cửa sổ</string>
-    <string name="overlay_word_count">%1$d từ khóa · nhấn □ để mở rộng</string>
+    <string name="overlay_word_count">%1$d từ</string>
+    <string name="overlay_chip_tap">Chạm icon để xem từ · kéo để di chuyển</string>
+    <string name="overlay_menu_hint">Chạm ra ngoài để đóng</string>
+    <string name="overlay_standby_hint">Đang chờ từ…</string>
+    <string name="overlay_tab_words">Từ</string>
+    <string name="overlay_tab_auto">Tự động</string>
+    <string name="overlay_tab_sync">Đồng bộ</string>
+    <string name="overlay_sync_user">Tài khoản: %1$s</string>
+    <string name="overlay_sync_guest">Chưa đăng nhập</string>
+    <string name="overlay_sync_stats">%1$d cặp từ trên máy</string>
+    <string name="overlay_sync_btn">Đồng bộ cloud</string>
+    <string name="overlay_sync_result_ok">Tải +%1$d · Đẩy +%2$d\nServer %3$d · Máy %4$d</string>
+    <string name="overlay_sync_need_login">Đăng nhập trong app PhaoHN trước</string>
+    <string name="overlay_sync_relookup">Đã tra lại từ trên overlay</string>
+    <string name="overlay_auto_title">Tự động</string>
+    <string name="overlay_auto_ready">Sẵn sàng</string>
+    <string name="overlay_auto_sit">Ngồi</string>
+    <string name="overlay_auto_vote">Đột tử</string>
 
     <string name="nav_home">Trang chủ</string>
     <string name="nav_lookup">Tra cứu</string>
     <string name="nav_words">Từ khóa</string>
+    <string name="nav_auto">Tự động</string>
+    <string name="words_tab_lookup">Tra cứu</string>
+    <string name="words_tab_list">Danh sách</string>
+    <string name="auto_subtitle">Tự Sẵn sàng, tự ngồi ghế và Đột tử khi bỏ phiếu</string>
     <string name="nav_history">Lịch sử</string>
     <string name="nav_about">Bản quyền</string>
+    <string name="nav_profile">Cá nhân</string>
 
     <string name="lookup_input_hint">Nhập từ khóa…</string>
     <string name="lookup_btn">Tra cứu</string>
@@ -79,7 +101,9 @@
     <string name="words_stats_total">%1$d cặp từ</string>
     <string name="words_stats_filtered">Tìm thấy %1$d / %2$d</string>
     <string name="words_stats_empty">Không có kết quả</string>
-    <string name="search_words">Tìm từ khóa…</string>
+    <string name="search_words">Tìm chính xác (hoa/thường, dấu, khoảng trắng)…</string>
+    <string name="words_search_hint">Tìm trong danh sách…</string>
+    <string name="close">Đóng</string>
     <string name="add_word">Thêm từ khóa</string>
     <string name="add_word_short">Thêm</string>
     <string name="add_mode_single">1 cặp</string>
@@ -121,6 +145,20 @@
     <string name="history_clear_confirm">Xóa toàn bộ lịch sử tra cứu?</string>
     <string name="history_cleared">Đã xóa lịch sử</string>
     <string name="history_delete_one_confirm">Xóa mục lịch sử này?</string>
+    <string name="sync_cloud">Đồng bộ cloud</string>
+    <string name="sync_running">Đang đồng bộ…</string>
+    <string name="sync_done_title">Đồng bộ xong</string>
+    <string name="sync_done_subtitle">Dữ liệu đã được cập nhật</string>
+    <string name="sync_stat_pull">Tải về</string>
+    <string name="sync_stat_push">Đẩy lên</string>
+    <string name="sync_stat_server">Server</string>
+    <string name="sync_stat_local">Máy</string>
+    <string name="sync_pull_value">+%1$d · bỏ %2$d</string>
+    <string name="sync_push_value">+%1$d · bỏ %2$d</string>
+    <string name="sync_count_value">%1$d cặp</string>
+    <string name="sync_ok">Đồng bộ xong\nTải về: +%1$d (bỏ %2$d)\nĐẩy lên: +%3$d (bỏ %4$d)\nServer: %5$d · Máy: %6$d</string>
+    <string name="sync_fail">Đồng bộ thất bại: %1$s</string>
+    <string name="sync_fail_title">Không đồng bộ được</string>
     <string name="import_excel">Nhập từ Excel/CSV</string>
     <string name="export_excel">Xuất Excel/CSV</string>
     <string name="import_empty">File trống hoặc không đọc được</string>
@@ -129,10 +167,44 @@
     <string name="history_no_other">-</string>
     <string name="history_time">%1$s</string>
 
-    <string name="settings_version">Phiên bản 1.8.4</string>
+    <string name="settings_version_fmt">Phiên bản %1$s</string>
     <string name="about_copyright_title">Bản quyền</string>
     <string name="about_copyright_desc">Ứng dụng PhaoHN được phát triển để hỗ trợ tra cứu từ khóa trong game WePlay Gián điệp. Mọi quyền sở hữu trí tuệ thuộc về PhaoHN. Không sao chép, phân phối lại hoặc sử dụng thương mại khi chưa được phép.</string>
     <string name="about_features_title">Tính năng</string>
-    <string name="about_features_list">• Tự lưu cặp từ khi hết ván\n• Tra cứu từ còn lại khi đang chơi\n• Bong bóng overlay trên WePlay\n• Quản lý từ khóa, nhập/xuất CSV\n• Lịch sử tra cứu từng ván</string>
+    <string name="about_features_list">• Đăng nhập tài khoản, đồng bộ cloud theo user\n• Tự lưu cặp từ khi hết ván\n• Tra cứu từ còn lại khi đang chơi\n• Chip overlay trên WePlay — chạm xem menu\n• Quản lý từ khóa, nhập/xuất CSV\n• Báo từ sai hoặc đề xuất sửa\n• Lịch sử tra cứu từng ván</string>
     <string name="about_footer">Cảm ơn bạn đã sử dụng PhaoHN</string>
+
+    <string name="login_subtitle">Đăng nhập để đồng bộ từ khóa</string>
+    <string name="login_username">Tên đăng nhập</string>
+    <string name="login_password">Mật khẩu</string>
+    <string name="login_btn">Đăng nhập</string>
+    <string name="login_empty">Vui lòng nhập tên và mật khẩu</string>
+    <string name="login_invalid">Sai tên đăng nhập hoặc mật khẩu</string>
+    <string name="login_fail">Đăng nhập thất bại: %1$s</string>
+    <string name="login_sync_fail">Đăng nhập OK nhưng không tải được từ khóa: %1$s</string>
+    <string name="login_hint">Tài khoản do Admin cấp. Sau đăng nhập, từ khóa được đồng bộ theo tài khoản của bạn.</string>
+
+    <string name="profile_title">Tài khoản</string>
+    <string name="profile_role_admin">Quản trị viên</string>
+    <string name="profile_role_user">Người dùng</string>
+    <string name="profile_change_password">Đổi mật khẩu</string>
+    <string name="profile_old_password">Mật khẩu hiện tại</string>
+    <string name="profile_new_password">Mật khẩu mới</string>
+    <string name="profile_password_changed">Đã đổi mật khẩu</string>
+    <string name="profile_wrong_password">Mật khẩu hiện tại không đúng</string>
+    <string name="profile_password_short">Mật khẩu mới tối thiểu 6 ký tự</string>
+    <string name="profile_password_fail">Không đổi được mật khẩu</string>
+    <string name="profile_logout">Đăng xuất</string>
+    <string name="profile_logout_confirm">Đăng xuất và xóa dữ liệu từ khóa trên máy?</string>
+
+    <string name="report">Báo cáo</string>
+    <string name="report_title">Báo cáo từ khóa</string>
+    <string name="report_type_wrong">Từ sai</string>
+    <string name="report_type_suggest">Đề xuất sửa</string>
+    <string name="report_message_hint">Ghi chú (tuỳ chọn)</string>
+    <string name="report_suggest_civilian">Dân thường đề xuất</string>
+    <string name="report_suggest_spy">Gián điệp đề xuất</string>
+    <string name="report_ok">Đã gửi báo cáo</string>
+    <string name="report_fail">Gửi báo cáo thất bại: %1$s</string>
+    <string name="report_suggest_required">Vui lòng nhập ít nhất một từ đề xuất</string>
 </resources>

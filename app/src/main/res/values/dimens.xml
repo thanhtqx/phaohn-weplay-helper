@@ -18,11 +18,15 @@
     <dimen name="momo_btn_corner">12dp</dimen>
     <dimen name="search_height">34dp</dimen>
     <dimen name="search_icon">14dp</dimen>
+    <dimen name="sync_action_size">28dp</dimen>
+    <dimen name="sync_action_padding">7dp</dimen>
+    <dimen name="overlay_sync_size">26dp</dimen>
+    <dimen name="overlay_sync_padding">5dp</dimen>
     <dimen name="search_text">12sp</dimen>
 
     <dimen name="table_stt_width">36dp</dimen>
     <dimen name="table_time_width">108dp</dimen>
-    <dimen name="table_action_width">72dp</dimen>
+    <dimen name="table_action_width">96dp</dimen>
     <dimen name="table_text">11sp</dimen>
     <dimen name="table_header_text">10sp</dimen>
     <dimen name="table_row_pad">6dp</dimen>
@@ -30,10 +34,15 @@
     <dimen name="vote_chip_spacing">6dp</dimen>
     <dimen name="vote_section_gap">10dp</dimen>
 
-    <dimen name="overlay_radius">12dp</dimen>
+    <dimen name="overlay_radius">14dp</dimen>
     <dimen name="overlay_title_height">34dp</dimen>
-    <dimen name="overlay_width">220dp</dimen>
+    <dimen name="overlay_width">200dp</dimen>
+    <dimen name="overlay_fab_size">40dp</dimen>
+    <dimen name="overlay_fab_icon">22dp</dimen>
+    <dimen name="overlay_menu_width">200dp</dimen>
     <dimen name="overlay_list_height">180dp</dimen>
-    <dimen name="overlay_pad_h">10dp</dimen>
-    <dimen name="overlay_pad_v">8dp</dimen>
+    <dimen name="overlay_menu_scroll_height">300dp</dimen>
+    <dimen name="overlay_menu_max_height">200dp</dimen>
+    <dimen name="overlay_pad_h">12dp</dimen>
+    <dimen name="overlay_pad_v">6dp</dimen>
 </resources>

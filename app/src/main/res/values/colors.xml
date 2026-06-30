@@ -25,7 +25,8 @@
     <color name="nav_bar_stroke">#DDE3F0</color>
     <color name="nav_ripple">#221565C0</color>
 
-    <color name="overlay_bg">#B3283558</color>
+    <color name="overlay_bg">#E6182038</color>
+    <color name="overlay_scrim">#18000000</color>
     <color name="overlay_divider">#33FFFFFF</color>
     <color name="overlay_control_normal">#18FFFFFF</color>
     <color name="overlay_control_pressed">#33FFFFFF</color>

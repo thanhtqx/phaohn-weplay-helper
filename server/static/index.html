@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PhaoHN — Từ khóa Gián điệp</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="app-page">
+  <div class="app-shell">
+    <aside class="app-aside">
+      <a href="/" class="brand">
+        <span class="brand-mark">P</span>
+        <span class="brand-text">
+          <strong>PhaoHN</strong>
+          <small>WePlay Gián điệp</small>
+        </span>
+      </a>
+
+      <p class="app-nav-label">Menu</p>
+      <nav class="app-nav" id="mainNav">
+        <button type="button" class="app-nav-item active" data-tab="words">
+          <svg class="app-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h16v2H4v-2z"/></svg>
+          Từ khóa
+        </button>
+        <button type="button" class="app-nav-item" data-tab="history">
+          <svg class="app-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a9 9 0 1 0 9 9h-2a7 7 0 1 1-2.05-4.95L14 10h6V4l-2.52 2.52A8.96 8.96 0 0 0 12 2zm-1 5v5.25l4.5 2.67.75-1.23-3.75-2.22V7H11z"/></svg>
+          Lịch sử
+        </button>
+      </nav>
+
+      <div class="app-aside-foot">
+        <div class="aside-profile">
+          <span class="aside-avatar" id="userAvatar">?</span>
+          <div class="aside-profile-text">
+            <span class="aside-profile-name" id="userBadge"></span>
+            <a id="linkAdmin" class="aside-profile-link hidden" href="/admin">Quản trị</a>
+          </div>
+        </div>
+        <div class="aside-tools">
+          <button id="btnHelp" class="aside-tool-btn" type="button" title="Hướng dẫn" aria-label="Hướng dẫn">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+          </button>
+          <button id="btnChangePassword" class="aside-tool-btn" type="button" title="Đổi mật khẩu" aria-label="Đổi mật khẩu">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+          </button>
+          <button id="btnLogout" class="aside-tool-btn aside-tool-btn-danger" type="button" title="Thoát" aria-label="Thoát">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <div class="app-main container-fluid">
+      <section id="tabWords" class="tab-panel active">
+        <header class="page-head">
+          <div>
+            <h1>Từ khóa</h1>
+            <p>Gõ để lọc danh sách · Enter hoặc nút tra để xem từ còn lại</p>
+          </div>
+        </header>
+
+        <div class="panel">
+          <div class="panel-toolbar">
+            <label class="search-field">
+              <span class="search-glyph" aria-hidden="true">⌕</span>
+              <input id="search" type="search" placeholder="Tìm trong danh sách…" autocomplete="off" />
+              <span class="stat-chip stat-chip-inline" id="stats">0 cặp</span>
+              <button id="btnLookup" class="btn-lookup" type="button" title="Tra cứu từ còn lại" aria-label="Tra cứu">⌕</button>
+            </label>
+            <div class="panel-actions">
+              <button id="btnAdd" class="btn btn-primary" type="button">Thêm</button>
+              <button id="btnImportFile" class="btn btn-secondary" type="button">Nhập file</button>
+              <button id="btnExport" class="btn btn-secondary" type="button">Xuất CSV</button>
+            </div>
+            <input id="fileInput" type="file" accept=".csv,.xlsx,.xlsm,text/csv" hidden />
+          </div>
+
+          <div id="lookupCard" class="lookup-inline hidden">
+            <div class="lookup-inline-body">
+              <p id="lookupMyWord" class="lookup-inline-my"></p>
+              <div id="lookupOthers" class="lookup-inline-others"></div>
+            </div>
+            <button id="btnCloseLookup" class="lookup-inline-close" type="button" aria-label="Đóng">×</button>
+          </div>
+
+          <div class="table-wrap" id="tableScroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th class="th-civilian">Dân thường</th>
+                  <th class="th-spy">Gián điệp</th>
+                  <th class="th-owner hidden" id="ownerHeader">Nguồn</th>
+                  <th class="th-actions"></th>
+                </tr>
+              </thead>
+              <tbody id="rows"></tbody>
+            </table>
+            <div id="empty" class="empty-state hidden">
+              <p class="empty-title">Chưa có từ khóa</p>
+              <p class="empty-desc">Thêm thủ công hoặc nhập file Excel/CSV để bắt đầu.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tabHistory" class="tab-panel hidden">
+        <header class="page-head">
+          <div>
+            <h1>Lịch sử</h1>
+            <p>Các lần tra cứu trên web</p>
+          </div>
+          <span class="stat-chip" id="historyStats">0 lần</span>
+        </header>
+
+        <div class="panel">
+          <div class="panel-toolbar panel-toolbar-end">
+            <button id="btnExportHistory" class="btn btn-secondary" type="button" disabled>Xuất CSV</button>
+            <button id="btnClearHistory" class="btn btn-secondary btn-danger-text" type="button" disabled>Xóa hết</button>
+          </div>
+
+          <div class="table-wrap" id="historyScroll">
+            <table class="data-table data-table-history">
+              <thead>
+                <tr>
+                  <th class="th-stt">#</th>
+                  <th class="th-time">Thời gian</th>
+                  <th class="th-myword">Từ của bạn</th>
+                  <th class="th-others">Từ còn lại</th>
+                  <th class="th-actions"></th>
+                </tr>
+              </thead>
+              <tbody id="historyRows"></tbody>
+            </table>
+            <div id="historyEmpty" class="empty-state hidden">
+              <p class="empty-title">Chưa có lịch sử</p>
+              <p class="empty-desc">Tra cứu từ ở tab Từ khóa sẽ được ghi lại tại đây.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="page-foot">
+        <span>© PhaoHN</span>
+      </footer>
+    </div>
+  </div>
+
+  <dialog id="dialog" class="modal">
+    <form id="form" method="dialog" class="modal-body">
+      <h2 class="modal-title" id="dialogTitle">Thêm cặp từ</h2>
+      <div id="modeTabs" class="seg-tabs">
+        <button type="button" class="seg-tab active" data-mode="single">Một cặp</button>
+        <button type="button" class="seg-tab" data-mode="multi">Nhiều cặp</button>
+      </div>
+      <div id="singleFields" class="field-stack">
+        <label class="field">
+          <span class="label-civilian">Dân thường</span>
+          <input id="civilian" maxlength="200" />
+        </label>
+        <label class="field">
+          <span class="label-spy">Gián điệp</span>
+          <input id="spy" maxlength="200" />
+        </label>
+      </div>
+      <div id="multiFields" class="field-stack hidden">
+        <label class="field">
+          Mỗi dòng một cặp: <span class="text-muted">Dân,Gián</span>
+          <textarea id="multiLines" rows="8" placeholder="Bánh mì,Phở&#10;Cà phê,Trà"></textarea>
+        </label>
+        <p class="text-muted">Có thể copy 2 cột từ Excel rồi dán vào.</p>
+      </div>
+      <p id="formError" class="alert alert-error hidden"></p>
+      <div class="modal-foot">
+        <button type="button" id="btnCancel" class="btn btn-secondary">Hủy</button>
+        <button type="submit" class="btn btn-primary" id="btnSave">Lưu</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="helpDialog" class="modal modal-wide">
+    <div class="modal-body help-scroll">
+      <h2 class="modal-title">Hướng dẫn</h2>
+      <section class="help-block">
+        <h3>Từ khóa</h3>
+        <ul>
+          <li>Ô tìm kiếm lọc danh sách theo khớp chính xác (phân biệt hoa/thường, dấu).</li>
+          <li>Nhấn <strong>Enter</strong> hoặc nút tra bên phải ô tìm để xem từ còn lại.</li>
+          <li><strong>Thêm</strong> / <strong>Nhập file</strong> / <strong>Xuất CSV</strong> để quản lý danh sách.</li>
+        </ul>
+      </section>
+      <section class="help-block">
+        <h3>Quyền &amp; đồng bộ</h3>
+        <ul>
+          <li>Mỗi tài khoản chỉ sửa từ của mình; admin sửa được tất cả.</li>
+          <li>Đồng bộ với app qua nút đồng bộ trên điện thoại.</li>
+        </ul>
+      </section>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-primary" id="btnHelpClose">Đóng</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="changePasswordDialog" class="modal">
+    <form id="changePasswordForm" method="dialog" class="modal-body">
+      <h2 class="modal-title">Đổi mật khẩu</h2>
+      <label class="field">
+        Mật khẩu hiện tại
+        <input id="oldPassword" type="password" required />
+      </label>
+      <label class="field">
+        Mật khẩu mới (tối thiểu 6 ký tự)
+        <input id="newPassword" type="password" minlength="6" required />
+      </label>
+      <p id="changePasswordError" class="alert alert-error hidden"></p>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" id="btnChangePasswordCancel">Hủy</button>
+        <button type="submit" class="btn btn-primary">Lưu</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="reportDialog" class="modal">
+    <form id="reportForm" method="dialog" class="modal-body">
+      <h2 class="modal-title">Báo cáo từ khóa</h2>
+      <p id="reportPairLabel" class="text-muted"></p>
+      <div class="seg-tabs" id="reportTypeTabs">
+        <button type="button" class="seg-tab active" data-type="wrong">Từ sai</button>
+        <button type="button" class="seg-tab" data-type="suggest_edit">Đề xuất sửa</button>
+      </div>
+      <label class="field">
+        Ghi chú (tuỳ chọn)
+        <textarea id="reportMessage" rows="2"></textarea>
+      </label>
+      <div id="reportSuggestFields" class="field-stack hidden">
+        <label class="field">
+          <span class="label-civilian">Dân đề xuất</span>
+          <input id="reportSuggestCivilian" maxlength="200" />
+        </label>
+        <label class="field">
+          <span class="label-spy">Gián đề xuất</span>
+          <input id="reportSuggestSpy" maxlength="200" />
+        </label>
+      </div>
+      <p id="reportError" class="alert alert-error hidden"></p>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" id="btnReportCancel">Hủy</button>
+        <button type="submit" class="btn btn-primary">Gửi</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="resultDialog" class="modal">
+    <div class="modal-body">
+      <h2 class="modal-title">Kết quả nhập</h2>
+      <pre id="resultText" class="result-pre"></pre>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-primary" id="btnResultOk">Đóng</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

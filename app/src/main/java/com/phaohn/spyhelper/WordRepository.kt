@@ -77,20 +77,27 @@ class WordRepository(
         val all = dao.getAll()
         if (query.isEmpty()) return@withContext all
         all.filter { pair ->
-            pair.civilianWord.contains(query) || pair.spyWord.contains(query)
+            WordMatcher.matches(pair.civilianWord, query) ||
+                WordMatcher.matches(pair.spyWord, query)
         }
     }
 
     suspend fun recordLookup(myWord: String, otherWords: List<String>) = withContext(Dispatchers.IO) {
+        val others = otherWords.joinToString("|")
+        val latest = historyDao.recent(1).firstOrNull()
+        if (latest?.myWord == myWord && latest.otherWords == others) return@withContext
         historyDao.insert(
             LookupHistory(
                 myWord = myWord,
-                otherWords = otherWords.joinToString("|"),
+                otherWords = others,
             )
         )
+        val maxHistory = 80
+        val extra = historyDao.count() - maxHistory
+        if (extra > 0) historyDao.deleteOldest(extra)
     }
 
-    suspend fun recentHistory(limit: Int = 100): List<LookupHistory> =
+    suspend fun recentHistory(limit: Int = 80): List<LookupHistory> =
         withContext(Dispatchers.IO) { historyDao.recent(limit) }
 
     suspend fun topLookupWords(limit: Int = 16): List<LookupWordCount> =
@@ -109,6 +116,39 @@ class WordRepository(
         }
         result
     }
+
+    suspend fun clearAllLocalData() = withContext(Dispatchers.IO) {
+        dao.clearAll()
+        historyDao.clearAll()
+        warmCache()
+    }
+
+    suspend fun pullServerWords(baseUrl: String, token: String) = withContext(Dispatchers.IO) {
+        val client = WordSyncClient(baseUrl, token)
+        val remote = client.pullPairs()
+        dao.clearAll()
+        lookupCache.clear()
+        importPairs(remote.map { it.civilianWord to it.spyWord })
+        warmCache()
+    }
+
+    suspend fun syncWithServer(baseUrl: String, token: String): ServerSyncResult =
+        withContext(Dispatchers.IO) {
+            val client = WordSyncClient(baseUrl, token)
+            val remote = client.pullPairs()
+            val pullResult = importPairs(remote.map { it.civilianWord to it.spyWord })
+            val local = dao.getAll()
+            val pushResult = client.pushPairs(local)
+            warmCache()
+            ServerSyncResult(
+                pulledAdded = pullResult.added,
+                pulledSkipped = pullResult.duplicate + pullResult.empty + pullResult.sameWord,
+                pushedAdded = pushResult.added,
+                pushedSkipped = pushResult.skipped,
+                serverTotal = pushResult.total,
+                localTotal = dao.countAll(),
+            )
+        }
 
     private suspend fun hasExactDuplicatePair(
         civilian: String,
@@ -156,6 +196,15 @@ class WordRepository(
         return others.toList()
     }
 }
+
+data class ServerSyncResult(
+    val pulledAdded: Int,
+    val pulledSkipped: Int,
+    val pushedAdded: Int,
+    val pushedSkipped: Int,
+    val serverTotal: Int,
+    val localTotal: Int,
+)
 
 sealed class LookupResult {
     data object NotInGame : LookupResult()

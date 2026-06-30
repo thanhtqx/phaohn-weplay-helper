@@ -14,7 +14,7 @@ class AboutFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentAboutBinding.inflate(inflater, container, false)
-        binding.aboutVersion.text = getString(R.string.settings_version)
+        binding.aboutVersion.text = getString(R.string.settings_version_fmt, BuildConfig.VERSION_NAME)
         return binding.root
     }
 

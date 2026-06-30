@@ -59,7 +59,7 @@
                 android:layout_weight="1" />
 
             <include
-                android:id="@+id/navLookup"
+                android:id="@+id/navAuto"
                 layout="@layout/item_bottom_nav"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"

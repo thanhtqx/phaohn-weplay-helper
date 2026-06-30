@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Đăng nhập — PhaoHN</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="login-page">
+  <div class="login-shell">
+    <div class="login-card">
+      <a href="/" class="brand brand-center">
+        <span class="brand-mark brand-mark-lg">P</span>
+        <span class="brand-text">
+          <strong>PhaoHN</strong>
+          <small>Quản lý từ khóa Gián điệp</small>
+        </span>
+      </a>
+
+      <form id="loginForm" class="login-form">
+        <label class="field">
+          Tài khoản
+          <input id="username" name="username" autocomplete="username" required />
+        </label>
+        <label class="field">
+          Mật khẩu
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <p id="loginError" class="alert alert-error hidden"></p>
+        <button type="submit" class="btn btn-primary btn-block">Đăng nhập</button>
+      </form>
+
+      <p class="login-hint">Tài khoản do Admin cấp.</p>
+    </div>
+    <p class="login-copy">© PhaoHN</p>
+  </div>
+  <script src="/static/login.js"></script>
+</body>
+</html>
