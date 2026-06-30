@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
     android:clipChildren="false"
-    android:clipToPadding="false"
-    android:orientation="vertical">
+    android:clipToPadding="false">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         style="@style/Widget.PhaoHN.Toolbar"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="44dp"
         android:background="@color/primary"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_max="@dimen/screen_content_max_width"
         app:logo="@drawable/ic_app_mark"
         app:titleMarginStart="6dp"
         app:titleTextAppearance="@style/ToolbarTitleText"
@@ -21,18 +24,26 @@
 
     <FrameLayout
         android:id="@+id/fragmentContainer"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        app:layout_constraintBottom_toTopOf="@id/bottomNavBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintWidth_max="@dimen/screen_content_max_width" />
 
     <FrameLayout
         android:id="@+id/bottomNavBar"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="@dimen/bottom_nav_bar_height"
         android:background="@drawable/bg_bottom_nav"
         android:clipChildren="false"
         android:clipToPadding="false"
-        android:elevation="10dp">
+        android:elevation="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_max="@dimen/screen_content_max_width">
 
         <LinearLayout
             android:id="@+id/bottomNav"
@@ -80,4 +91,4 @@
                 android:layout_weight="1" />
         </LinearLayout>
     </FrameLayout>
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Màn hình app: 0dp = không giới hạn chiều ngang (phone) -->
+    <dimen name="screen_content_max_width">0dp</dimen>
+    <dimen name="screen_pad_h">16dp</dimen>
+    <dimen name="screen_pad_v">14dp</dimen>
+    <dimen name="screen_card_pad">16dp</dimen>
+    <dimen name="screen_pad_h_wide">24dp</dimen>
+
     <dimen name="bottom_nav_height">56dp</dimen>
     <dimen name="bottom_nav_bar_height">56dp</dimen>
     <dimen name="bottom_nav_overflow_pad">0dp</dimen>
@@ -36,13 +43,13 @@
 
     <dimen name="overlay_radius">14dp</dimen>
     <dimen name="overlay_title_height">34dp</dimen>
-    <dimen name="overlay_width">200dp</dimen>
-    <dimen name="overlay_fab_size">40dp</dimen>
-    <dimen name="overlay_fab_icon">22dp</dimen>
-    <dimen name="overlay_menu_width">200dp</dimen>
-    <dimen name="overlay_list_height">180dp</dimen>
-    <dimen name="overlay_menu_scroll_height">300dp</dimen>
-    <dimen name="overlay_menu_max_height">200dp</dimen>
-    <dimen name="overlay_pad_h">12dp</dimen>
+    <dimen name="overlay_width">260dp</dimen>
+    <dimen name="overlay_fab_size">44dp</dimen>
+    <dimen name="overlay_fab_icon">24dp</dimen>
+    <dimen name="overlay_menu_width">260dp</dimen>
+    <dimen name="overlay_list_height">260dp</dimen>
+    <dimen name="overlay_menu_scroll_height">380dp</dimen>
+    <dimen name="overlay_menu_max_height">280dp</dimen>
+    <dimen name="overlay_pad_h">14dp</dimen>
     <dimen name="overlay_pad_v">6dp</dimen>
 </resources>

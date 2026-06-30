@@ -1,289 +1,310 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/overlayRoot"
+    android:id="@+id/overlayWindowRoot"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:gravity="start"
-    android:orientation="vertical">
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
-    <FrameLayout
-        android:id="@+id/overlayChip"
-        android:layout_width="@dimen/overlay_fab_size"
-        android:layout_height="@dimen/overlay_fab_size"
-        android:background="@drawable/bg_overlay_fab_selector"
-        android:contentDescription="@string/overlay_chip_tap"
-        android:elevation="4dp">
-
-        <ImageView
-            android:id="@+id/overlayFabIcon"
-            android:layout_width="@dimen/overlay_fab_icon"
-            android:layout_height="@dimen/overlay_fab_icon"
-            android:layout_gravity="center"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_app_mark" />
-
-        <TextView
-            android:id="@+id/overlayFabBadge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="top|end"
-            android:layout_marginTop="1dp"
-            android:layout_marginEnd="1dp"
-            android:background="@drawable/bg_overlay_badge"
-            android:gravity="center"
-            android:minWidth="14dp"
-            android:minHeight="14dp"
-            android:paddingHorizontal="3dp"
-            android:textColor="#FFFFFF"
-            android:textSize="8sp"
-            android:textStyle="bold"
-            android:visibility="gone"
-            tools:text="7"
-            tools:visibility="visible" />
-    </FrameLayout>
+    <View
+        android:id="@+id/overlayScrim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/overlay_scrim"
+        android:clickable="true"
+        android:focusable="false"
+        android:visibility="gone" />
 
     <LinearLayout
-        android:id="@+id/overlayMenu"
-        android:layout_width="@dimen/overlay_menu_width"
+        android:id="@+id/overlayRoot"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:background="@drawable/bg_overlay_menu"
-        android:elevation="3dp"
-        android:orientation="vertical"
-        android:paddingBottom="6dp"
-        android:visibility="gone"
-        tools:visibility="visible">
+        android:gravity="start"
+        android:orientation="vertical">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/overlay_pad_h"
-            android:layout_marginTop="6dp"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/overlayTabWords"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@drawable/bg_overlay_tab_selector"
-                android:gravity="center"
-                android:paddingBottom="6dp"
-                android:paddingTop="4dp"
-                android:text="@string/overlay_tab_words"
-                android:textColor="@color/overlay_text_primary"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/overlayTabAuto"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@drawable/bg_overlay_tab_selector"
-                android:gravity="center"
-                android:paddingBottom="6dp"
-                android:paddingTop="4dp"
-                android:text="@string/overlay_tab_auto"
-                android:textColor="@color/overlay_text_muted"
-                android:textSize="11sp"
-                android:textStyle="bold" />
+        <FrameLayout
+            android:id="@+id/overlayChip"
+            android:layout_width="@dimen/overlay_fab_size"
+            android:layout_height="@dimen/overlay_fab_size"
+            android:background="@drawable/bg_overlay_fab_selector"
+            android:contentDescription="@string/overlay_chip_tap"
+            android:elevation="4dp">
 
             <ImageView
-                android:id="@+id/overlaySyncIcon"
-                android:layout_width="@dimen/overlay_sync_size"
-                android:layout_height="@dimen/overlay_sync_size"
-                android:layout_gravity="center_vertical"
-                android:layout_marginStart="4dp"
-                android:background="@drawable/bg_overlay_chip_selector"
-                android:contentDescription="@string/sync_cloud"
-                android:padding="@dimen/overlay_sync_padding"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_sync"
-                app:tint="@color/overlay_text_muted" />
+                android:id="@+id/overlayFabIcon"
+                android:layout_width="@dimen/overlay_fab_icon"
+                android:layout_height="@dimen/overlay_fab_icon"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_app_mark" />
+
+            <TextView
+                android:id="@+id/overlayFabBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="1dp"
+                android:layout_marginEnd="1dp"
+                android:background="@drawable/bg_overlay_badge"
+                android:gravity="center"
+                android:minWidth="14dp"
+                android:minHeight="14dp"
+                android:paddingHorizontal="3dp"
+                android:textColor="#FFFFFF"
+                android:textSize="8sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="7"
+                tools:visibility="visible" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/overlayMenu"
+            android:layout_width="@dimen/overlay_menu_width"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_overlay_menu"
+            android:elevation="3dp"
+            android:orientation="vertical"
+            android:paddingBottom="6dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/overlay_pad_h"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/overlayTabWords"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_overlay_tab_selector"
+                    android:gravity="center"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/overlay_tab_words"
+                    android:textColor="@color/overlay_text_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/overlayTabAuto"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_overlay_tab_selector"
+                    android:gravity="center"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="6dp"
+                    android:text="@string/overlay_tab_auto"
+                    android:textColor="@color/overlay_text_muted"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:id="@+id/overlaySyncIcon"
+                    android:layout_width="@dimen/overlay_sync_size"
+                    android:layout_height="@dimen/overlay_sync_size"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="4dp"
+                    android:background="@drawable/bg_overlay_chip_selector"
+                    android:contentDescription="@string/sync_cloud"
+                    android:padding="@dimen/overlay_sync_padding"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_sync"
+                    app:tint="@color/overlay_text_muted" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@drawable/bg_overlay_divider" />
+
+            <FrameLayout
+                android:id="@+id/overlayPanelHost"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/overlay_menu_max_height">
+
+                <ScrollView
+                    android:id="@+id/overlayWordsPanel"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:overScrollMode="never"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="@dimen/overlay_pad_h"
+                        android:paddingTop="10dp"
+                        android:paddingBottom="10dp">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/my_word"
+                            android:textColor="@color/overlay_text_hint"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:id="@+id/overlayMyWord"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="-"
+                            android:textColor="@color/overlay_accent_civilian"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            tools:text="Mỹ Tâm" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:text="@string/other_word"
+                            android:textColor="@color/overlay_text_hint"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:id="@+id/overlayOtherWord"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:lineSpacingExtra="2dp"
+                            android:textColor="@color/overlay_accent_spy"
+                            android:textSize="12sp"
+                            tools:text="◦ Từ 1\n◦ Từ 2" />
+                    </LinearLayout>
+                </ScrollView>
+
+                <ScrollView
+                    android:id="@+id/overlayAutoPanel"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:overScrollMode="never"
+                    android:scrollbars="none"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:id="@+id/overlayAutoContent"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="@dimen/overlay_pad_h"
+                        android:paddingTop="10dp"
+                        android:paddingBottom="10dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/overlayAutoReady"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="5dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_overlay_toggle_selector"
+                                android:gravity="center"
+                                android:paddingVertical="7dp"
+                                android:text="@string/overlay_auto_ready"
+                                android:textColor="@color/overlay_text_primary"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/overlayAutoSit"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="5dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_overlay_toggle_selector"
+                                android:gravity="center"
+                                android:paddingVertical="7dp"
+                                android:text="@string/overlay_auto_sit"
+                                android:textColor="@color/overlay_text_primary"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/overlayAutoVote"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_overlay_toggle_selector"
+                                android:gravity="center"
+                                android:paddingVertical="7dp"
+                                android:text="@string/overlay_auto_vote"
+                                android:textColor="@color/overlay_text_primary"
+                                android:textSize="10sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/overlayVotePanel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:orientation="vertical"
+                            android:visibility="gone"
+                            tools:visibility="visible">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/vote_seat_section_label"
+                                android:textColor="@color/overlay_text_hint"
+                                android:textSize="10sp" />
+
+                            <LinearLayout
+                                android:id="@+id/overlaySeatRow1"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:orientation="horizontal" />
+
+                            <LinearLayout
+                                android:id="@+id/overlaySeatRow2"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="3dp"
+                                android:orientation="horizontal" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/vote_tap_section_label"
+                                android:textColor="@color/overlay_text_hint"
+                                android:textSize="10sp" />
+
+                            <LinearLayout
+                                android:id="@+id/overlaySecRow1"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:orientation="horizontal" />
+
+                            <LinearLayout
+                                android:id="@+id/overlaySecRow2"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="3dp"
+                                android:orientation="horizontal" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </ScrollView>
+            </FrameLayout>
         </LinearLayout>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@drawable/bg_overlay_divider" />
-
-        <ScrollView
-            android:id="@+id/overlayWordsPanel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:maxHeight="@dimen/overlay_menu_max_height"
-            android:overScrollMode="never"
-            android:scrollbars="none">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingHorizontal="@dimen/overlay_pad_h"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/my_word"
-                    android:textColor="@color/overlay_text_hint"
-                    android:textSize="10sp" />
-
-                <TextView
-                    android:id="@+id/overlayMyWord"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:ellipsize="end"
-                    android:maxLines="2"
-                    android:text="-"
-                    android:textColor="@color/overlay_accent_civilian"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    tools:text="Mỹ Tâm" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:text="@string/other_word"
-                    android:textColor="@color/overlay_text_hint"
-                    android:textSize="10sp" />
-
-                <TextView
-                    android:id="@+id/overlayOtherWord"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:lineSpacingExtra="2dp"
-                    android:textColor="@color/overlay_accent_spy"
-                    android:textSize="12sp"
-                    tools:text="◦ Từ 1\n◦ Từ 2" />
-            </LinearLayout>
-        </ScrollView>
-
-        <ScrollView
-            android:id="@+id/overlayAutoPanel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:maxHeight="@dimen/overlay_menu_max_height"
-            android:overScrollMode="never"
-            android:scrollbars="none"
-            android:visibility="gone">
-
-            <LinearLayout
-                android:id="@+id/overlayAutoContent"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingHorizontal="@dimen/overlay_pad_h"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/overlayAutoReady"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="5dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_overlay_toggle_selector"
-                        android:gravity="center"
-                        android:paddingVertical="7dp"
-                        android:text="@string/overlay_auto_ready"
-                        android:textColor="@color/overlay_text_primary"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/overlayAutoSit"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="5dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_overlay_toggle_selector"
-                        android:gravity="center"
-                        android:paddingVertical="7dp"
-                        android:text="@string/overlay_auto_sit"
-                        android:textColor="@color/overlay_text_primary"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/overlayAutoVote"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_overlay_toggle_selector"
-                        android:gravity="center"
-                        android:paddingVertical="7dp"
-                        android:text="@string/overlay_auto_vote"
-                        android:textColor="@color/overlay_text_primary"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/overlayVotePanel"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:orientation="vertical"
-                    android:visibility="gone"
-                    tools:visibility="visible">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/vote_seat_section_label"
-                        android:textColor="@color/overlay_text_hint"
-                        android:textSize="10sp" />
-
-                    <LinearLayout
-                        android:id="@+id/overlaySeatRow1"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:orientation="horizontal" />
-
-                    <LinearLayout
-                        android:id="@+id/overlaySeatRow2"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="3dp"
-                        android:orientation="horizontal" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="@string/vote_tap_section_label"
-                        android:textColor="@color/overlay_text_hint"
-                        android:textSize="10sp" />
-
-                    <LinearLayout
-                        android:id="@+id/overlaySecRow1"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:orientation="horizontal" />
-
-                    <LinearLayout
-                        android:id="@+id/overlaySecRow2"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="3dp"
-                        android:orientation="horizontal" />
-                </LinearLayout>
-            </LinearLayout>
-        </ScrollView>
     </LinearLayout>
-</LinearLayout>
+</FrameLayout>

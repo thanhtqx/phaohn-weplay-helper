@@ -10,8 +10,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="14dp"
+        android:paddingHorizontal="@dimen/screen_pad_h"
+        android:paddingTop="@dimen/screen_pad_v"
         android:paddingBottom="20dp">
 
         <LinearLayout
@@ -19,7 +19,7 @@
             android:layout_height="wrap_content"
             android:background="@drawable/bg_home_hero"
             android:orientation="vertical"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="@dimen/screen_card_pad"
             android:paddingVertical="14dp">
 
             <LinearLayout
@@ -141,7 +141,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="@dimen/screen_card_pad">
 
                 <TextView
                     android:layout_width="wrap_content"

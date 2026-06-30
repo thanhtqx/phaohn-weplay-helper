@@ -72,6 +72,10 @@ class SpyAccessibilityService : AccessibilityService() {
         registerAutoPrefsReceiver()
         scanScope.launch { repository.warmCache() }
         startContinuousScan()
+        mainScope.launch {
+            delay(OVERLAY_BOOT_DELAY_MS)
+            if (isWePlayForeground()) ensureBubbleVisible()
+        }
     }
 
     private fun registerReceiverCompat(receiver: BroadcastReceiver, filter: IntentFilter) {
@@ -104,7 +108,6 @@ class SpyAccessibilityService : AccessibilityService() {
         if (event.packageName != WePlayIds.PACKAGE) {
             seatedInLobby = false
             resetVoteState()
-            if (bubbleVisible) requestHide()
             return
         }
         scanOnce()
@@ -244,6 +247,7 @@ class SpyAccessibilityService : AccessibilityService() {
         }
 
         if (inGame || voteUi) {
+            ensureBubbleVisible()
             maybeAutoVote(root)
             return when {
                 voteRoundActive || voteTapInProgress || voteUi -> POLL_VOTE_MS
@@ -562,17 +566,35 @@ class SpyAccessibilityService : AccessibilityService() {
 
     private fun maybeShowStandby(
         root: AccessibilityNodeInfo? = null,
-        voteUi: Boolean = root?.let { WePlaySeatHelper.hasVoteUiReady(it) } == true,
+        @Suppress("UNUSED_PARAMETER") voteUi: Boolean = root?.let { WePlaySeatHelper.hasVoteUiReady(it) } == true,
     ) {
-        if (lastSelfWord != null || cachedGameBubble != null) return
-        if (voteUi) return
+        if (cachedGameBubble != null) {
+            restoreCachedBubble()
+            return
+        }
+        if (lastSelfWord != null) return
         if (root != null && WePlaySeatHelper.hasVisibleSelfWord(root)) return
         showStandbyFab()
     }
 
+    private fun ensureBubbleVisible() {
+        if (!Settings.canDrawOverlays(this)) return
+        if (bubbleVisible && OverlayService.isBubbleOnScreen()) return
+        if (cachedGameBubble != null) {
+            restoreCachedBubble()
+        } else {
+            showStandbyFab()
+        }
+    }
+
     private fun showStandbyFab() {
         if (!Settings.canDrawOverlays(this)) return
-        if (overlayStandby && bubbleVisible) return
+        if (bubbleVisible && !OverlayService.isBubbleOnScreen()) {
+            bubbleVisible = false
+            overlayStandby = false
+        }
+        if (overlayStandby && bubbleVisible && OverlayService.isBubbleOnScreen()) return
+        cancelPendingHide()
         mainScope.launch {
             if (!Settings.canDrawOverlays(this@SpyAccessibilityService)) return@launch
             ensureOverlayService()
@@ -601,9 +623,17 @@ class SpyAccessibilityService : AccessibilityService() {
         plainMessage: String? = null,
     ) {
         val snapshot = CachedGameBubble(myWord, myRole, others, plainMessage)
-        if (cachedGameBubble == snapshot && bubbleVisible && !overlayStandby) return
+        if (bubbleVisible && !OverlayService.isBubbleOnScreen()) {
+            bubbleVisible = false
+        }
+        if (cachedGameBubble == snapshot && bubbleVisible && !overlayStandby &&
+            OverlayService.isBubbleOnScreen()
+        ) {
+            return
+        }
         cachedGameBubble = snapshot
         if (!Settings.canDrawOverlays(this)) return
+        cancelPendingHide()
         mainScope.launch {
             if (!Settings.canDrawOverlays(this@SpyAccessibilityService)) return@launch
             overlayStandby = false
@@ -639,6 +669,7 @@ class SpyAccessibilityService : AccessibilityService() {
 
     private fun requestHide() {
         if (!bubbleVisible) return
+        if (isWePlayForeground()) return
         if (hideJob?.isActive == true) return
         hideJob = mainScope.launch {
             delay(HIDE_DEBOUNCE_MS)
@@ -648,6 +679,10 @@ class SpyAccessibilityService : AccessibilityService() {
 
     private fun performHide() {
         cancelPendingHide()
+        if (isWePlayForeground()) {
+            ensureBubbleVisible()
+            return
+        }
         if (!bubbleVisible && lastSelfWord == null && cachedGameBubble == null) return
         clearGameBubbleState()
         overlayStandby = false
@@ -683,7 +718,7 @@ class SpyAccessibilityService : AccessibilityService() {
                     showGameBubble(selfWord, null, emptyList(), getString(R.string.not_in_db))
                     sendLookupBroadcast(selfWord, null, emptyList())
                 }
-                LookupResult.NotInGame -> mainScope.launch { performHide() }
+                LookupResult.NotInGame -> mainScope.launch { maybeShowStandby() }
             }
         }
     }
@@ -725,6 +760,7 @@ class SpyAccessibilityService : AccessibilityService() {
         private const val POLL_IDLE_MS = 250L
         private const val POLL_NO_WEPLAY_MS = 600L
         private const val HIDE_DEBOUNCE_MS = 800L
+        private const val OVERLAY_BOOT_DELAY_MS = 400L
         private const val READY_CLICK_COOLDOWN_MS = 300L
         private const val SIT_CLICK_COOLDOWN_MS = 1000L
         private const val SIT_SKIP_LOG_INTERVAL_MS = 3000L

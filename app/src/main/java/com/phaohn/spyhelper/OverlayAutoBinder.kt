@@ -94,9 +94,12 @@ class OverlayAutoBinder(
 
     private fun refreshVotePanel(forceLayout: Boolean = false) {
         val show = SpyPrefs.isAutoVoteEnabled(context)
-        if (votePanel.isVisible != show || forceLayout) {
-            votePanel.isVisible = show
-            onLayoutChanged()
+        when {
+            show != votePanel.isVisible -> {
+                votePanel.isVisible = show
+                onLayoutChanged()
+            }
+            forceLayout -> onLayoutChanged()
         }
         (seatChips + secChips).forEach { chip ->
             chip.isEnabled = true

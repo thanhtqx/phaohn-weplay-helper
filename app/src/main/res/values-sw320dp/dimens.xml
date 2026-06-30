@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Máy hẹp ~4.7"–5" -->
+    <dimen name="screen_pad_h">12dp</dimen>
+    <dimen name="screen_pad_v">10dp</dimen>
+    <dimen name="screen_card_pad">12dp</dimen>
+    <dimen name="screen_pad_h_wide">18dp</dimen>
+    <dimen name="search_height">32dp</dimen>
+    <dimen name="search_text">11sp</dimen>
+    <dimen name="table_action_width">80dp</dimen>
+    <dimen name="table_text">10sp</dimen>
+    <dimen name="table_header_text">9sp</dimen>
+    <dimen name="vote_seat_chip_height">32dp</dimen>
+    <dimen name="vote_chip_spacing">4dp</dimen>
+    <dimen name="bottom_nav_text">9sp</dimen>
+</resources>

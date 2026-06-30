@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tablet / màn rất rộng: nội dung căn giữa, không tràn full -->
+    <dimen name="screen_content_max_width">560dp</dimen>
+    <dimen name="screen_pad_h">24dp</dimen>
+    <dimen name="screen_pad_v">20dp</dimen>
+    <dimen name="screen_card_pad">20dp</dimen>
+</resources>

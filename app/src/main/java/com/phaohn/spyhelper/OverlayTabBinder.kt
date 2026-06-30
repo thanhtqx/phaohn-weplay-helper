@@ -22,6 +22,8 @@ class OverlayTabBinder(
         Tab(menuRoot.findViewById(R.id.overlayTabAuto), menuRoot.findViewById(R.id.overlayAutoPanel)),
     )
 
+    private var activeIndex = 0
+
     fun bind() {
         tabs[0].button.setOnClickListener { show(0) }
         tabs[1].button.setOnClickListener { show(1) }
@@ -31,9 +33,12 @@ class OverlayTabBinder(
     fun showWords() = show(0)
 
     private fun show(index: Int) {
+        if (index == activeIndex && tabs[index].panel.isVisible) return
+        activeIndex = index
         tabs.forEachIndexed { i, tab ->
             val active = i == index
             tab.button.isSelected = active
+            tab.button.refreshDrawableState()
             tab.button.setTextColor(
                 ContextCompat.getColor(
                     context,
