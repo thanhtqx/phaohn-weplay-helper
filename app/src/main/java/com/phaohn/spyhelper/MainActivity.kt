@@ -15,8 +15,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.phaohn.spyhelper.databinding.ActivityMainBinding
 import com.phaohn.spyhelper.databinding.ItemBottomNavBinding
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -59,8 +61,43 @@ class MainActivity : AppCompatActivity() {
             finish()
             return
         }
+        lifecycleScope.launch {
+            try {
+                auth.verifySession()
+                initMainUi(savedInstanceState)
+            } catch (e: AccountLockedException) {
+                auth.clearSession()
+                startActivity(
+                    Intent(this@MainActivity, LoginActivity::class.java).apply {
+                        putExtra(AccountLockHandler.EXTRA_LOCK_MESSAGE, e.lockMessage)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    },
+                )
+                finish()
+            } catch (_: AuthException) {
+                auth.clearSession()
+                startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+                finish()
+            }
+        }
+    }
+
+    private fun initMainUi(savedInstanceState: Bundle?) {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        auth.getUser()?.username?.let { SpyPrefs.setLastPushUsername(this, it) }
+        val baseUrl = SpyPrefs.syncBaseUrl(this)
+        val token = auth.getToken()
+        lifecycleScope.launch {
+            PhaoHNApp.repo(application).flushPendingPushToServer(this@MainActivity, baseUrl, token)
+            AdminNotificationHelper.pullAfterServerTouch(
+                this@MainActivity,
+                baseUrl,
+                token,
+                this@MainActivity,
+            )
+        }
 
         setSupportActionBar(binding.toolbar)
         setupBottomNavInsets()
@@ -157,16 +194,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateToolbarTitle(itemId: Int) {
-        val titleRes = when (itemId) {
-            R.id.nav_home -> R.string.nav_home
-            R.id.nav_words -> R.string.nav_words
-            R.id.nav_auto -> R.string.nav_auto
-            R.id.nav_history -> R.string.nav_history
-            R.id.nav_about -> R.string.nav_profile
-            else -> R.string.nav_home
-        }
-        binding.toolbar.title = getString(titleRes)
+    private fun updateToolbarTitle(@Suppress("UNUSED_PARAMETER") itemId: Int) {
+        binding.toolbar.title = ""
     }
 
     private fun showFragment(fragment: Fragment, @Suppress("UNUSED_PARAMETER") titleRes: Int) {

@@ -18,7 +18,9 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintWidth_max="@dimen/screen_content_max_width"
         app:logo="@drawable/ic_app_mark"
-        app:titleMarginStart="6dp"
+        app:logoDescription="@string/app_name"
+        app:title=""
+        app:titleMarginStart="0dp"
         app:titleTextAppearance="@style/ToolbarTitleText"
         app:titleTextColor="@android:color/white" />
 

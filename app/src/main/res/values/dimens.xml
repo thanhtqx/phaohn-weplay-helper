@@ -10,7 +10,7 @@
     <dimen name="bottom_nav_height">56dp</dimen>
     <dimen name="bottom_nav_bar_height">56dp</dimen>
     <dimen name="bottom_nav_overflow_pad">0dp</dimen>
-    <dimen name="bottom_nav_corner_radius">0dp</dimen>
+    <dimen name="bottom_nav_corner_radius">16dp</dimen>
     <dimen name="bottom_nav_active_radius">18dp</dimen>
     <dimen name="bottom_nav_active_lift">0dp</dimen>
     <dimen name="bottom_nav_icon">22dp</dimen>
@@ -37,6 +37,10 @@
     <dimen name="table_text">11sp</dimen>
     <dimen name="table_header_text">10sp</dimen>
     <dimen name="table_row_pad">6dp</dimen>
+    <dimen name="home_stat_value">20sp</dimen>
+    <dimen name="home_stat_label">10sp</dimen>
+    <dimen name="home_stat_pad_v">10dp</dimen>
+    <dimen name="home_hero_icon">34dp</dimen>
     <dimen name="vote_seat_chip_height">36dp</dimen>
     <dimen name="vote_chip_spacing">6dp</dimen>
     <dimen name="vote_section_gap">10dp</dimen>
