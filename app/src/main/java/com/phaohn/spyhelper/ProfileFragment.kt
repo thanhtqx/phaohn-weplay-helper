@@ -40,6 +40,7 @@ class ProfileFragment : Fragment() {
         val user = auth.getUser() ?: return
         binding.profileUsername.text = user.username
         binding.profileRole.text = when (user.role) {
+            AuthManager.ROLE_SUPERADMIN -> getString(R.string.profile_role_superadmin)
             AuthManager.ROLE_ADMIN -> getString(R.string.profile_role_admin)
             else -> getString(R.string.profile_role_user)
         }

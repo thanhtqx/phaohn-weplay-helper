@@ -6,8 +6,19 @@ import bcrypt
 
 from .database import get_conn
 
+ROLE_SUPERADMIN = "superadmin"
 ROLE_ADMIN = "admin"
 ROLE_USER = "user"
+STAFF_ROLES = frozenset({ROLE_ADMIN, ROLE_SUPERADMIN})
+
+
+def is_staff(user: dict) -> bool:
+    return user.get("role") in STAFF_ROLES
+
+
+def is_superadmin(user: dict) -> bool:
+    return user.get("role") == ROLE_SUPERADMIN
+DEFAULT_LOCK_MESSAGE = "Tài khoản đã bị Admin khóa."
 
 
 def hash_password(password: str) -> str:
@@ -19,6 +30,11 @@ def verify_password(password: str, password_hash: str) -> bool:
         return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
     except ValueError:
         return False
+
+
+def account_locked_detail(reason: str | None) -> dict:
+    msg = (reason or "").strip() or DEFAULT_LOCK_MESSAGE
+    return {"code": "account_locked", "message": msg}
 
 
 def ensure_default_admin() -> None:
@@ -37,32 +53,62 @@ def ensure_default_admin() -> None:
             INSERT INTO users (username, password_hash, role, created_at, created_by)
             VALUES (?, ?, ?, ?, NULL)
             """,
-            (admin_user, hash_password(admin_pass), ROLE_ADMIN, now),
+            (admin_user, hash_password(admin_pass), ROLE_SUPERADMIN, now),
         )
         conn.commit()
 
 
-def authenticate(username: str, password: str) -> dict | None:
+def _user_public(row) -> dict:
+    keys = row.keys()
+    user_id = row["id"] if "id" in keys else row["user_id"]
+    return {
+        "id": user_id,
+        "username": row["username"],
+        "nickname": row["nickname"] if "nickname" in keys else None,
+        "role": row["role"],
+    }
+
+
+def get_user_by_username(username: str) -> dict | None:
     with get_conn() as conn:
         row = conn.execute(
-            "SELECT id, username, password_hash, role FROM users WHERE username = ?",
+            "SELECT id, username, nickname, role, is_locked FROM users WHERE username = ?",
             (username,),
         ).fetchone()
     if not row:
         return None
-    if not verify_password(password, row["password_hash"]):
+    if row["is_locked"]:
         return None
-    return {
-        "id": row["id"],
-        "username": row["username"],
-        "role": row["role"],
-    }
+    return _user_public(row)
+
+
+def authenticate(username: str, password: str) -> tuple[dict | None, dict | None]:
+    """Trả về (user, lock_detail). lock_detail chỉ có khi đúng MK nhưng bị khóa."""
+    with get_conn() as conn:
+        row = conn.execute(
+            """
+            SELECT id, username, nickname, password_hash, role, is_locked, lock_reason
+            FROM users WHERE username = ?
+            """,
+            (username,),
+        ).fetchone()
+    if not row:
+        return None, None
+    if not verify_password(password, row["password_hash"]):
+        return None, None
+    if row["is_locked"]:
+        return None, account_locked_detail(row["lock_reason"])
+    return _user_public(row), None
 
 
 def get_user(user_id: int) -> dict | None:
     with get_conn() as conn:
         row = conn.execute(
-            "SELECT id, username, role, created_at, created_by FROM users WHERE id = ?",
+            """
+            SELECT id, username, nickname, role, created_at, created_by,
+                   is_locked, lock_reason, locked_at, locked_by
+            FROM users WHERE id = ?
+            """,
             (user_id,),
         ).fetchone()
     return dict(row) if row else None
@@ -72,7 +118,8 @@ def list_users() -> list[dict]:
     with get_conn() as conn:
         rows = conn.execute(
             """
-            SELECT u.id, u.username, u.role, u.created_at,
+            SELECT u.id, u.username, u.nickname, u.role, u.created_at,
+                   u.is_locked, u.lock_reason,
                    c.username AS created_by_name
             FROM users u
             LEFT JOIN users c ON c.id = u.created_by
@@ -89,7 +136,7 @@ def create_user(username: str, password: str, role: str, created_by: int) -> tup
         return None, "username_short"
     if len(password) < 6:
         return None, "password_short"
-    if role not in (ROLE_ADMIN, ROLE_USER):
+    if role not in (ROLE_USER, ROLE_ADMIN):
         return None, "invalid_role"
     with get_conn() as conn:
         exists = conn.execute(
@@ -112,6 +159,27 @@ def create_user(username: str, password: str, role: str, created_by: int) -> tup
     return user, None
 
 
+def update_user_role(actor: dict, user_id: int, role: str) -> tuple[bool, str | None]:
+    if not is_superadmin(actor):
+        return False, "forbidden"
+    if role not in (ROLE_USER, ROLE_ADMIN):
+        return False, "invalid_role"
+    if user_id == actor["id"]:
+        return False, "self"
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT id, role FROM users WHERE id = ?",
+            (user_id,),
+        ).fetchone()
+        if not row:
+            return False, "not_found"
+        if row["role"] == ROLE_SUPERADMIN:
+            return False, "cannot_change_superadmin"
+        conn.execute("UPDATE users SET role = ? WHERE id = ?", (role, user_id))
+        conn.commit()
+    return True, None
+
+
 def delete_user(user_id: int, actor_id: int) -> tuple[bool, str | None]:
     if user_id == actor_id:
         return False, "self"
@@ -124,6 +192,75 @@ def delete_user(user_id: int, actor_id: int) -> tuple[bool, str | None]:
     return True, None
 
 
+def lock_user(user_id: int, admin_id: int, reason: str) -> tuple[bool, str | None]:
+    if user_id == admin_id:
+        return False, "self"
+    reason = reason.strip()
+    if not reason:
+        return False, "reason_required"
+    now = int(time.time() * 1000)
+    with get_conn() as conn:
+        row = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not row:
+            return False, "not_found"
+        conn.execute(
+            """
+            UPDATE users
+            SET is_locked = 1, lock_reason = ?, locked_at = ?, locked_by = ?
+            WHERE id = ?
+            """,
+            (reason, now, admin_id, user_id),
+        )
+        conn.commit()
+    return True, None
+
+
+def unlock_user(user_id: int, admin_id: int) -> tuple[bool, str | None]:
+    if user_id == admin_id:
+        return False, "self"
+    with get_conn() as conn:
+        row = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not row:
+            return False, "not_found"
+        conn.execute(
+            """
+            UPDATE users
+            SET is_locked = 0, lock_reason = NULL, locked_at = NULL, locked_by = NULL
+            WHERE id = ?
+            """,
+            (user_id,),
+        )
+        conn.commit()
+    return True, None
+
+
+def update_nickname(user_id: int, nickname: str) -> tuple[bool, str | None]:
+    nickname = nickname.strip()
+    if not nickname:
+        return False, "empty"
+    if len(nickname) > 64:
+        return False, "too_long"
+    with get_conn() as conn:
+        row = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not row:
+            return False, "not_found"
+        conn.execute(
+            "UPDATE users SET nickname = ? WHERE id = ?",
+            (nickname, user_id),
+        )
+        conn.commit()
+    return True, None
+
+
+def get_me(user_id: int) -> dict | None:
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT id, username, nickname, role FROM users WHERE id = ?",
+            (user_id,),
+        ).fetchone()
+    return _user_public(row) if row else None
+
+
 def change_own_password(
     user_id: int,
     old_password: str,
@@ -133,11 +270,13 @@ def change_own_password(
         return False, "password_short"
     with get_conn() as conn:
         row = conn.execute(
-            "SELECT password_hash FROM users WHERE id = ?",
+            "SELECT password_hash, is_locked FROM users WHERE id = ?",
             (user_id,),
         ).fetchone()
         if not row:
             return False, "not_found"
+        if row["is_locked"]:
+            return False, "account_locked"
         if not verify_password(old_password, row["password_hash"]):
             return False, "wrong_password"
         conn.execute(
@@ -176,25 +315,26 @@ def store_session(token: str, user_id: int, expires_at: int) -> None:
         conn.commit()
 
 
-def get_session_user(token: str) -> dict | None:
+def get_session_user(token: str) -> tuple[dict | None, dict | None]:
+    """Trả về (user, lock_detail). lock_detail khi phiên hợp lệ nhưng tài khoản bị khóa."""
     now = int(time.time())
     with get_conn() as conn:
         row = conn.execute(
             """
-            SELECT s.user_id, u.username, u.role
+            SELECT u.id, u.username, u.nickname, u.role, u.is_locked, u.lock_reason
             FROM sessions s
             JOIN users u ON u.id = s.user_id
             WHERE s.token = ? AND s.expires_at > ?
             """,
             (token, now),
         ).fetchone()
-    if not row:
-        return None
-    return {
-        "id": row["user_id"],
-        "username": row["username"],
-        "role": row["role"],
-    }
+        if not row:
+            return None, None
+        if row["is_locked"]:
+            conn.execute("DELETE FROM sessions WHERE user_id = ?", (row["id"],))
+            conn.commit()
+            return None, account_locked_detail(row["lock_reason"])
+    return _user_public(row), None
 
 
 def delete_session(token: str) -> None:

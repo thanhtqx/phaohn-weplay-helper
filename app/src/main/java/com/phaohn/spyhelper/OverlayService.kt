@@ -5,9 +5,11 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.view.ContextThemeWrapper
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
+import android.os.SystemClock
 import android.util.DisplayMetrics
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -16,18 +18,20 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
+import android.widget.ImageView
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 class OverlayService : Service() {
 
     private var windowManager: WindowManager? = null
     private var overlayWindowRoot: View? = null
     private var overlayContent: View? = null
-    private var scrimView: View? = null
     private var layoutParams: WindowManager.LayoutParams? = null
 
     private var chipView: View? = null
@@ -45,6 +49,8 @@ class OverlayService : Service() {
     private var dragMoved = false
     private var isDragging = false
     private var menuOpen = false
+    private var menuAnimating = false
+    private var lastChipTapMs = 0L
     private var lastOtherCount = 0
     private var isHiding = false
     private var posX = DEFAULT_POS_X
@@ -56,26 +62,6 @@ class OverlayService : Service() {
 
     private val boundsRunnable = Runnable { clampPositionIfNeeded(persist = false) }
 
-    private var dragLayoutX = Int.MIN_VALUE
-    private var dragLayoutY = Int.MIN_VALUE
-    private var dragLayoutPending = false
-    private val dragLayoutRunnable = Runnable {
-        dragLayoutPending = false
-        if (!isDragging || menuOpen) return@Runnable
-        val wm = windowManager ?: return@Runnable
-        val params = layoutParams ?: return@Runnable
-        val root = overlayWindowRoot ?: return@Runnable
-        val x = dragLayoutX
-        val y = dragLayoutY
-        if (params.x == x && params.y == y) return@Runnable
-        params.x = x
-        params.y = y
-        try {
-            wm.updateViewLayout(root, params)
-        } catch (_: Exception) {
-        }
-    }
-
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
@@ -86,7 +72,7 @@ class OverlayService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_HIDE -> hideOverlay()
+            ACTION_HIDE -> hideOverlay(force = true)
             ACTION_UPDATE -> {
                 val my = intent.getStringExtra(EXTRA_MY_WORD)
                 val myRole = WordRole.fromName(intent.getStringExtra(EXTRA_MY_ROLE))
@@ -101,7 +87,6 @@ class OverlayService : Service() {
 
     override fun onDestroy() {
         if (instance === this) instance = null
-        hideScrim(animate = false, immediate = true)
         overlayWindowRoot?.let { detachOverlayView(it) } ?: run { isHiding = false }
         super.onDestroy()
     }
@@ -121,7 +106,13 @@ class OverlayService : Service() {
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
 
     private fun showOverlay() {
-        if (overlayWindowRoot != null) return
+        val existing = overlayWindowRoot
+        if (existing != null) {
+            if (!isHiding) return
+            cancelHideAnimation()
+            ensureVisible(animateIn = true)
+            return
+        }
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         val prefs = overlayPrefs()
         posX = prefs.getInt(PREF_POS_X, DEFAULT_POS_X)
@@ -143,10 +134,10 @@ class OverlayService : Service() {
             }
         }
 
-        val root = LayoutInflater.from(applicationContext).inflate(R.layout.overlay_spy_word, null)
+        val themedCtx = ContextThemeWrapper(applicationContext, R.style.Theme_PhaoHN)
+        val root = LayoutInflater.from(themedCtx).inflate(R.layout.overlay_spy_word, null)
         overlayWindowRoot = root
         overlayContent = root.findViewById(R.id.overlayRoot)
-        scrimView = root.findViewById(R.id.overlayScrim)
         isHiding = false
         menuOpen = false
 
@@ -156,10 +147,16 @@ class OverlayService : Service() {
         myWordView = root.findViewById(R.id.overlayMyWord)
         otherWordView = root.findViewById(R.id.overlayOtherWord)
 
-        scrimView?.setOnClickListener { setMenuOpen(false, animate = false) }
+        root.findViewById<View>(R.id.overlayScrim)?.apply {
+            isVisible = false
+            isClickable = false
+        }
 
         setupChipTouch()
         val menu = menuView ?: root
+        menu.findViewById<ImageView>(R.id.overlayMenuClose)?.setOnClickListener {
+            closeMenu(animate = true)
+        }
         val onBounds: () -> Unit = { scheduleBoundsSync() }
         syncBinder = OverlaySyncBinder(
             menu.findViewById(R.id.overlaySyncIcon),
@@ -182,9 +179,21 @@ class OverlayService : Service() {
 
         windowManager?.addView(root, layoutParams)
         root.post {
-            applyWindowLayout()
             clampPositionIfNeeded(persist = false)
+            applyWindowPosition()
             ensureVisible(animateIn = true)
+        }
+    }
+
+    private fun applyWindowPosition() {
+        val params = layoutParams ?: return
+        params.x = posX
+        params.y = posY
+        overlayContent?.translationX = 0f
+        overlayContent?.translationY = 0f
+        try {
+            windowManager?.updateViewLayout(overlayWindowRoot, params)
+        } catch (_: Exception) {
         }
     }
 
@@ -245,7 +254,7 @@ class OverlayService : Service() {
                     dragMoved = true
                     isDragging = true
                     overlayWindowRoot?.removeCallbacks(boundsRunnable)
-                    if (isMenuShowing()) setMenuOpen(false, animate = false)
+                    overlayContent?.setLayerType(View.LAYER_TYPE_HARDWARE, null)
                 }
                 if (dragMoved) {
                     dragOffsetX = dx
@@ -254,19 +263,17 @@ class OverlayService : Service() {
                 }
                 return true
             }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+            MotionEvent.ACTION_UP -> {
                 if (dragMoved) {
-                    cancelDragLayout()
-                    posX = posStartX + dragOffsetX.toInt()
-                    posY = posStartY + dragOffsetY.toInt()
-                    dragOffsetX = 0f
-                    dragOffsetY = 0f
-                    isDragging = false
-                    applyPosition()
-                    clampPositionIfNeeded(persist = true)
-                    ensureVisible()
+                    finishChipDrag()
                 } else {
-                    toggleMenu()
+                    onChipTap()
+                }
+                return true
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                if (dragMoved) {
+                    finishChipDrag()
                 }
                 return true
             }
@@ -274,40 +281,49 @@ class OverlayService : Service() {
         return false
     }
 
-    /** Menu đóng: dịch cửa sổ (1 lần/vsync). Menu mở: translation trên full màn. */
-    private fun applyDragVisual() {
-        val content = overlayContent ?: return
-        val dragX = posStartX + dragOffsetX.toInt()
-        val dragY = posStartY + dragOffsetY.toInt()
-
+    private fun onChipTap() {
+        val now = SystemClock.elapsedRealtime()
+        if (menuAnimating || now - lastChipTapMs < CHIP_TAP_DEBOUNCE_MS) return
+        lastChipTapMs = now
         if (menuOpen) {
-            content.translationX = dragX.toFloat()
-            content.translationY = dragY.toFloat()
+            closeMenu(animate = true)
         } else {
-            content.translationX = 0f
-            content.translationY = 0f
-            scheduleDragLayout(dragX, dragY)
+            openMenu(animate = true)
         }
     }
 
-    private fun scheduleDragLayout(x: Int, y: Int) {
-        dragLayoutX = x
-        dragLayoutY = y
-        if (dragLayoutPending) return
-        dragLayoutPending = true
-        overlayWindowRoot?.postOnAnimation(dragLayoutRunnable)
+    private fun finishChipDrag() {
+        posX = posStartX + dragOffsetX.roundToInt()
+        posY = posStartY + dragOffsetY.roundToInt()
+        dragOffsetX = 0f
+        dragOffsetY = 0f
+        isDragging = false
+        dragMoved = false
+        overlayContent?.setLayerType(View.LAYER_TYPE_NONE, null)
+        overlayContent?.translationX = 0f
+        overlayContent?.translationY = 0f
+        applyWindowPosition()
+        clampPositionIfNeeded(persist = true)
+        ensureVisible()
     }
 
-    private fun cancelDragLayout() {
-        overlayWindowRoot?.removeCallbacks(dragLayoutRunnable)
-        dragLayoutPending = false
+    private fun applyDragVisual() {
+        val content = overlayContent ?: return
+        content.translationX = dragOffsetX
+        content.translationY = dragOffsetY
     }
 
-    private fun isMenuShowing(): Boolean = menuOpen || menuView?.isVisible == true
+    private fun isMenuShowing(): Boolean =
+        menuOpen || menuAnimating || menuView?.isVisible == true
 
-    private fun toggleMenu() {
-        val opening = !isMenuShowing()
-        setMenuOpen(opening, animate = opening)
+    private fun openMenu(animate: Boolean) {
+        if (menuOpen || menuAnimating) return
+        setMenuOpen(true, animate)
+    }
+
+    private fun closeMenu(animate: Boolean) {
+        if (!isMenuShowing()) return
+        setMenuOpen(false, animate)
     }
 
     private fun setMenuOpen(open: Boolean, animate: Boolean) {
@@ -315,76 +331,52 @@ class OverlayService : Service() {
         menu.animate().cancel()
 
         if (open) {
-            if (isMenuShowing()) return
+            if (menuOpen || menuAnimating) return
             menuOpen = true
-            applyWindowLayout()
             updateFabState(true)
             tabBinder?.showWords()
             autoBinder?.refreshFromPrefs()
-            showScrim(animate)
             menu.isVisible = true
+            overlayWindowRoot?.requestLayout()
+            overlayWindowRoot?.post { clampPositionIfNeeded(persist = false) }
             if (animate) {
+                menuAnimating = true
                 menu.alpha = 0f
                 menu.animate()
                     .alpha(1f)
-                    .setDuration(160)
+                    .setDuration(MENU_ANIM_OPEN_MS)
                     .setInterpolator(DecelerateInterpolator())
+                    .withEndAction { menuAnimating = false }
                     .start()
             } else {
                 menu.alpha = 1f
+                menuAnimating = false
             }
         } else {
-            if (!isMenuShowing()) return
-            hideScrim(animate = false)
+            if (!menuOpen && !menuAnimating && !menu.isVisible) return
             updateFabState(false)
             menu.animate().cancel()
-            menu.isVisible = false
-            menu.alpha = 1f
-            menuOpen = false
-            overlayContent?.translationX = 0f
-            overlayContent?.translationY = 0f
-            applyWindowLayout()
-        }
-    }
 
-    private fun showScrim(animate: Boolean) {
-        val scrim = scrimView ?: return
-        scrim.animate().cancel()
-        scrim.isVisible = true
-        if (animate) {
-            scrim.alpha = 0f
-            scrim.animate()
-                .alpha(1f)
-                .setDuration(160)
-                .setInterpolator(DecelerateInterpolator())
-                .start()
-        } else {
-            scrim.alpha = 1f
-        }
-    }
+            fun finishClose() {
+                menu.isVisible = false
+                menu.alpha = 1f
+                menuOpen = false
+                menuAnimating = false
+                overlayWindowRoot?.requestLayout()
+                overlayWindowRoot?.post { clampPositionIfNeeded(persist = false) }
+            }
 
-    private fun hideScrim(animate: Boolean, immediate: Boolean = false) {
-        val scrim = scrimView ?: return
-        scrim.animate().cancel()
-        if (immediate) {
-            scrim.isVisible = false
-            scrim.alpha = 1f
-            return
-        }
-        if (!scrim.isVisible) return
-        if (animate) {
-            scrim.animate()
-                .alpha(0f)
-                .setDuration(120)
-                .setInterpolator(DecelerateInterpolator())
-                .withEndAction {
-                    scrim.isVisible = false
-                    scrim.alpha = 1f
-                }
-                .start()
-        } else {
-            scrim.isVisible = false
-            scrim.alpha = 1f
+            if (animate && menu.isVisible) {
+                menuAnimating = true
+                menu.animate()
+                    .alpha(0f)
+                    .setDuration(MENU_ANIM_CLOSE_MS)
+                    .setInterpolator(DecelerateInterpolator())
+                    .withEndAction { finishClose() }
+                    .start()
+            } else {
+                finishClose()
+            }
         }
     }
 
@@ -460,51 +452,6 @@ class OverlayService : Service() {
         return clampedX to clampedY
     }
 
-    /** Menu đóng: cửa sổ WRAP_CONTENT (chạm xuyên qua WePlay). Menu mở: full màn + scrim. */
-    private fun applyWindowLayout() {
-        val wm = windowManager ?: return
-        val params = layoutParams ?: return
-        val root = overlayWindowRoot ?: return
-        val content = overlayContent ?: return
-
-        if (menuOpen) {
-            params.width = WindowManager.LayoutParams.MATCH_PARENT
-            params.height = WindowManager.LayoutParams.MATCH_PARENT
-            params.x = 0
-            params.y = 0
-            content.translationX = posX.toFloat()
-            content.translationY = posY.toFloat()
-        } else {
-            params.width = WindowManager.LayoutParams.WRAP_CONTENT
-            params.height = WindowManager.LayoutParams.WRAP_CONTENT
-            params.x = posX
-            params.y = posY
-            content.translationX = 0f
-            content.translationY = 0f
-        }
-        try {
-            wm.updateViewLayout(root, params)
-        } catch (_: Exception) {
-        }
-    }
-
-    private fun applyPosition() {
-        val content = overlayContent ?: return
-        content.translationX = 0f
-        content.translationY = 0f
-        if (menuOpen) {
-            content.translationX = posX.toFloat()
-            content.translationY = posY.toFloat()
-        } else {
-            layoutParams?.x = posX
-            layoutParams?.y = posY
-            try {
-                windowManager?.updateViewLayout(overlayWindowRoot, layoutParams)
-            } catch (_: Exception) {
-            }
-        }
-    }
-
     private fun clampPositionIfNeeded(persist: Boolean) {
         if (isDragging) return
         val (width, height) = contentSize()
@@ -512,7 +459,7 @@ class OverlayService : Service() {
         if (clamped.first == posX && clamped.second == posY) return
         posX = clamped.first
         posY = clamped.second
-        applyPosition()
+        applyWindowPosition()
         if (persist) persistPosition(posX, posY)
     }
 
@@ -535,7 +482,8 @@ class OverlayService : Service() {
         content.scaleY = 1f
     }
 
-    fun hideOverlay() {
+    fun hideOverlay(force: Boolean = false) {
+        if (!force && isMenuShowing()) return
         val root = overlayWindowRoot ?: run {
             isHiding = false
             return
@@ -543,7 +491,6 @@ class OverlayService : Service() {
         if (isHiding) return
         isHiding = true
         setMenuOpen(false, animate = false)
-        hideScrim(animate = false, immediate = true)
         val content = overlayContent ?: root
         content.animate().cancel()
         content.animate()
@@ -557,7 +504,6 @@ class OverlayService : Service() {
     }
 
     private fun detachOverlayView(view: View) {
-        cancelDragLayout()
         overlayWindowRoot?.removeCallbacks(boundsRunnable)
         try {
             windowManager?.removeView(view)
@@ -565,7 +511,6 @@ class OverlayService : Service() {
         }
         overlayWindowRoot = null
         overlayContent = null
-        scrimView = null
         layoutParams = null
         chipView = null
         menuView = null
@@ -573,6 +518,7 @@ class OverlayService : Service() {
         myWordView = null
         otherWordView = null
         menuOpen = false
+        menuAnimating = false
         isHiding = false
         autoBinder = null
         tabBinder = null
@@ -585,19 +531,22 @@ class OverlayService : Service() {
         myRole: WordRole?,
         others: List<LabeledWord>,
         plainMessage: String?,
-        animate: Boolean = true,
+        @Suppress("UNUSED_PARAMETER") animate: Boolean = true,
     ) {
         if (isHiding) cancelHideAnimation()
-        val my = myWord ?: "-"
-        val myText = if (myRole != null && my != "-" && my != LOADING) {
-            RoleTextFormatter.coloredWordBubble(my, myRole)
-        } else {
-            my
+        val placeholder = getString(R.string.word_placeholder)
+        val my = myWord?.trim().orEmpty()
+        val myText = when {
+            my.isEmpty() || my == "-" -> placeholder
+            myRole != null -> RoleTextFormatter.coloredWordBubble(my, myRole)
+            else -> my
         }
         val otherText = when {
             !plainMessage.isNullOrEmpty() -> plainMessage
             others.isNotEmpty() -> RoleTextFormatter.formatOthersBubble(others)
-            else -> getString(R.string.not_in_db)
+            myRole != null -> placeholder
+            my.isNotEmpty() && my != "-" -> getString(R.string.word_searching)
+            else -> getString(R.string.word_searching)
         }
         val otherCount = when {
             !plainMessage.isNullOrEmpty() -> 0
@@ -619,20 +568,27 @@ class OverlayService : Service() {
         val myView = myWordView ?: return
         val otherView = otherWordView ?: return
 
-        val applyContent = {
-            myView.text = myText
-            otherView.text = otherText
-            if (otherCount > 0) {
-                fabBadgeView?.isVisible = true
-                fabBadgeView?.text = otherCount.coerceAtMost(99).toString()
-            } else {
-                fabBadgeView?.isVisible = false
-            }
-            overlayWindowRoot?.findViewById<ScrollView>(R.id.overlayWordsPanel)?.scrollTo(0, 0)
-            setupChipTouch()
+        val hintColor = ContextCompat.getColor(this, R.color.overlay_text_hint)
+        val civilianColor = ContextCompat.getColor(this, R.color.overlay_accent_civilian)
+        myView.text = myText
+        myView.setTextColor(
+            when {
+                myText == placeholder -> hintColor
+                myText is android.text.Spanned -> civilianColor
+                else -> civilianColor
+            },
+        )
+        otherView.text = otherText
+        otherView.setTextColor(hintColor)
+        if (otherCount > 0) {
+            fabBadgeView?.isVisible = true
+            fabBadgeView?.text = otherCount.coerceAtMost(99).toString()
+        } else {
+            fabBadgeView?.isVisible = false
         }
-
-        applyContent()
+        overlayWindowRoot?.findViewById<ScrollView>(R.id.overlayWordsPanel)?.scrollTo(0, 0)
+        overlayWindowRoot?.findViewById<ScrollView>(R.id.overlayOtherWordScroll)?.scrollTo(0, 0)
+        setupChipTouch()
         ensureVisible()
     }
 
@@ -664,14 +620,16 @@ class OverlayService : Service() {
         const val EXTRA_PLAIN_MESSAGE = "plain_message"
         const val EXTRA_ANIMATE = "animate"
 
-        private const val LOADING = "…"
         private const val PREFS_NAME = "phaohn_overlay"
         private const val PREF_POS_X = "pos_x"
         private const val PREF_POS_Y = "pos_y"
         private const val DEFAULT_POS_X = 24
         private const val DEFAULT_POS_Y = 180
-        private const val DRAG_SLOP = 16f
+        private const val DRAG_SLOP = 10f
         private const val BOUNDS_DEBOUNCE_MS = 120L
+        private const val CHIP_TAP_DEBOUNCE_MS = 300L
+        private const val MENU_ANIM_OPEN_MS = 160L
+        private const val MENU_ANIM_CLOSE_MS = 120L
 
         @Volatile
         private var instance: OverlayService? = null
@@ -701,14 +659,18 @@ class OverlayService : Service() {
         }
 
         fun start(context: Context) {
-            if (instance != null) return
+            val running = instance
+            if (running != null) {
+                if (!running.isBubbleAttached()) running.showOverlay()
+                return
+            }
             context.startForegroundService(Intent(context, OverlayService::class.java))
         }
 
         fun hide(context: Context) {
             val running = instance
             if (running != null) {
-                running.hideOverlay()
+                running.hideOverlay(force = false)
                 return
             }
             context.startService(
@@ -721,5 +683,10 @@ class OverlayService : Service() {
         }
 
         fun isBubbleOnScreen(): Boolean = instance?.isBubbleAttached() == true
+
+        fun isMenuExpanded(): Boolean {
+            val running = instance ?: return false
+            return running.menuOpen || running.menuAnimating || running.menuView?.isVisible == true
+        }
     }
 }

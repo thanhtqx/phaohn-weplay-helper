@@ -48,6 +48,12 @@ class SpyAccessibilityService : AccessibilityService() {
     private var lastVoteSkipLogAt = 0L
     private var voteTapInProgress = false
     private var voteUiGoneStreak = 0
+    private var wePlayAbsentStreak = 0
+    /** Hết ván đã ghi — không tra cứu cho đến ván mới (có từ sau khi vào lobby). */
+    private var lookupPausedUntilNextRound = false
+    private var wasInLobbyBetweenRounds = false
+    /** Đã tra xong cho từ này trong ván — không tra lại cho đến hết ván / ván mới. */
+    private var lookupSettledForWord: String? = null
 
     private val pairsUpdatedReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -67,14 +73,17 @@ class SpyAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         repository = PhaoHNApp.repo(application)
-        ensureOverlayService()
         registerPairsUpdatedReceiver()
         registerAutoPrefsReceiver()
-        scanScope.launch { repository.warmCache() }
         startContinuousScan()
-        mainScope.launch {
-            delay(OVERLAY_BOOT_DELAY_MS)
-            if (isWePlayForeground()) ensureBubbleVisible()
+        scanScope.launch { repository.warmCache() }
+        if (Settings.canDrawOverlays(this)) {
+            ensureOverlayService()
+            mainScope.launch {
+                delay(OVERLAY_BOOT_DELAY_MS)
+                cancelPendingHide()
+                ensureBubbleVisible()
+            }
         }
     }
 
@@ -134,13 +143,18 @@ class SpyAccessibilityService : AccessibilityService() {
             seatedInLobby = false
             resetVoteState()
             if (isWePlayForeground()) {
+                wePlayAbsentStreak = 0
                 cancelPendingHide()
-                maybeShowStandby()
+                ensureBubbleVisible()
                 return POLL_NO_WEPLAY_MS
             }
-            if (bubbleVisible) requestHide()
+            wePlayAbsentStreak++
+            if (wePlayAbsentStreak >= WEPLAY_HIDE_MISS_STREAK && bubbleVisible) {
+                requestHide()
+            }
             return POLL_NO_WEPLAY_MS
         }
+        wePlayAbsentStreak = 0
         try {
             return scanTree(root)
         } finally {
@@ -209,7 +223,15 @@ class SpyAccessibilityService : AccessibilityService() {
             seatedInLobby = false
             resetVoteState()
             clearRoomSeatCountIfNeeded()
-            if (bubbleVisible) requestHide()
+            if (!isWePlayForeground()) {
+                wePlayAbsentStreak++
+                if (wePlayAbsentStreak >= WEPLAY_HIDE_MISS_STREAK && bubbleVisible) {
+                    requestHide()
+                }
+            } else {
+                wePlayAbsentStreak = 0
+                ensureBubbleVisible()
+            }
             return POLL_IDLE_MS
         }
 
@@ -219,24 +241,37 @@ class SpyAccessibilityService : AccessibilityService() {
         val spy = textById(root, WePlayIds.SPY)
         if (!civilian.isNullOrEmpty() && !spy.isNullOrEmpty()) {
             resetVoteState()
-            maybeSavePairAndClose(root, civilian, spy)
-            clearGameBubbleState()
-            cancelPendingHide()
-            maybeShowStandby()
+            handleEndGameDialog(root, civilian, spy)
             return POLL_LOBBY_MS
         }
 
-        val selfWord = WordParser.parseSelfWord(textById(root, WePlayIds.SELF_WORD))
         val voteUi = WePlaySeatHelper.hasVoteUiReady(root)
-        val inGame = selfWord != null || lastSelfWord != null ||
-            cachedGameBubble != null ||
-            WePlaySeatHelper.hasVisibleSelfWord(root)
+        val selfWord = WordParser.parseSelfWord(textById(root, WePlayIds.SELF_WORD))
+        val visibleSelfWord = selfWord != null || WePlaySeatHelper.hasVisibleSelfWord(root)
+        val inLobby = WePlaySeatHelper.canAutoSit(root) && !visibleSelfWord && !voteUi
+        if (inLobby) {
+            wasInLobbyBetweenRounds = true
+        }
+
+        val inGame = visibleSelfWord || voteUi ||
+            (!inLobby && (lastSelfWord != null || cachedGameBubble != null))
 
         if (selfWord != null) {
             seatedInLobby = true
             cancelPendingHide()
-            maybeLookup(selfWord)
-        } else if (!WePlaySeatHelper.isWaitingInRoom(root) &&
+            if (lookupPausedUntilNextRound) {
+                if (wasInLobbyBetweenRounds) {
+                    lookupPausedUntilNextRound = false
+                    lookupSettledForWord = null
+                    maybeLookup(selfWord)
+                } else {
+                    showStandbyFab()
+                }
+            } else {
+                maybeLookup(selfWord)
+            }
+        } else if (!lookupPausedUntilNextRound &&
+            !WePlaySeatHelper.isWaitingInRoom(root) &&
             (lastSelfWord != null || cachedGameBubble != null)
         ) {
             seatedInLobby = true
@@ -245,6 +280,8 @@ class SpyAccessibilityService : AccessibilityService() {
         } else {
             maybeShowStandby(root, voteUi)
         }
+
+        maybeRunLobbyAutomation(root)
 
         if (inGame || voteUi) {
             ensureBubbleVisible()
@@ -257,28 +294,27 @@ class SpyAccessibilityService : AccessibilityService() {
         }
 
         if (WePlaySeatHelper.canAutoSit(root)) {
-            if (lastSelfWord != null || cachedGameBubble != null) clearGameBubbleState()
             cancelPendingHide()
-            maybeShowStandby(root)
+            ensureBubbleVisible()
             if (!voteRoundActive) resetVoteState()
-            val seated = WePlaySeatHelper.isUserSeated(root)
-            seatedInLobby = seated
-            if (!seated) maybeAutoSit(root)
-            maybeAutoReady(root)
+            seatedInLobby = WePlaySeatHelper.isUserSeated(root)
             return POLL_LOBBY_MS
         }
         if (!voteRoundActive) resetVoteState()
         lastTimerSec = null
         seatedInLobby = false
-        maybeAutoSit(root)
-        maybeAutoReady(root)
         cancelPendingHide()
-        if (cachedGameBubble != null) {
-            restoreCachedBubble()
-        } else {
-            maybeShowStandby(root)
-        }
+        ensureBubbleVisible()
         return POLL_IDLE_MS
+    }
+
+    /** Tự ngồi / Sẵn sàng — chạy mỗi vòng quét, không phụ thuộc bubble cache ván trước. */
+    private fun maybeRunLobbyAutomation(root: AccessibilityNodeInfo) {
+        if (WePlaySeatHelper.hasVoteUiReady(root) && voteRoundActive) return
+        if (!WePlaySeatHelper.hasVisibleSelfWord(root)) {
+            maybeAutoSit(root)
+        }
+        maybeAutoReady(root)
     }
 
     private fun maybeDetectRoomSeatCount(root: AccessibilityNodeInfo) {
@@ -371,6 +407,7 @@ class SpyAccessibilityService : AccessibilityService() {
 
     private fun maybeAutoVote(root: AccessibilityNodeInfo) {
         if (!SpyPrefs.isAutoVoteEnabled(applicationContext)) return
+        if (!SpyPrefs.isVoteSettingsLocked(applicationContext)) return
         if (!SpyPrefs.isVoteSeatChosen(applicationContext)) return
 
         if (voteRoundActive && markVoteUiGone(root)) return
@@ -482,16 +519,19 @@ class SpyAccessibilityService : AccessibilityService() {
 
     private fun maybeAutoReady(root: AccessibilityNodeInfo) {
         if (!SpyPrefs.isAutoReadyEnabled(applicationContext)) return
+        if (!WePlaySeatHelper.hasActiveReadyPrompt(root)) return
         val nodes = root.findAccessibilityNodeInfosByViewId(WePlayIds.READY_BTN)
         try {
-            val node = nodes.firstOrNull() ?: return
-            val label = node.text?.toString().orEmpty()
-            if (!label.contains(WePlayIds.READY_LABEL, ignoreCase = true)) return
-            if (!node.isEnabled) return
+            val node = nodes.firstOrNull { n ->
+                n.isVisibleToUser && n.isEnabled &&
+                    n.text?.toString().orEmpty()
+                        .contains(WePlayIds.READY_LABEL, ignoreCase = true)
+            } ?: return
             val now = SystemClock.uptimeMillis()
             if (now - lastReadyClickAt < READY_CLICK_COOLDOWN_MS) return
             if (AccessibilityTapHelper.tapNode(this, node)) {
                 lastReadyClickAt = now
+                Log.d(SIT_TAG, "tap ready OK")
             }
         } finally {
             nodes.forEach { it.recycle() }
@@ -507,11 +547,31 @@ class SpyAccessibilityService : AccessibilityService() {
         }
     }
 
+    /** Popup kết thúc ván — lưu cặp từ rồi dừng tra cứu, không giữ bubble ván cũ. */
+    private fun handleEndGameDialog(
+        root: AccessibilityNodeInfo,
+        civilian: String,
+        spy: String,
+    ) {
+        lookupJob?.cancel()
+        clearGameBubbleState()
+        lookupSettledForWord = null
+        lookupPausedUntilNextRound = true
+        wasInLobbyBetweenRounds = false
+        maybeSavePairAndClose(root, civilian, spy)
+        cancelPendingHide()
+        showStandbyFab()
+    }
+
     private fun maybeSavePairAndClose(
         root: AccessibilityNodeInfo,
         civilian: String,
         spy: String,
     ) {
+        if (!AuthManager(applicationContext).isLoggedIn()) {
+            dismissEndGameDialog(root)
+            return
+        }
         if (civilian == lastCivilian && spy == lastSpy) {
             dismissEndGameDialog(root)
             return
@@ -519,9 +579,23 @@ class SpyAccessibilityService : AccessibilityService() {
         lastCivilian = civilian
         lastSpy = spy
         scanScope.launch {
-            val saved = repository.savePair(civilian, spy)
-            if (saved) {
-                sendBroadcast(Intent(ACTION_PAIRS_UPDATED).setPackage(packageName))
+            val auth = AuthManager(applicationContext)
+            when (
+                repository.autoCaptureAndSync(
+                    applicationContext,
+                    civilian,
+                    spy,
+                    SpyPrefs.syncBaseUrl(applicationContext),
+                    auth.getToken(),
+                )
+            ) {
+                AutoCaptureResult.SAVED,
+                AutoCaptureResult.QUEUED_OFFLINE,
+                -> sendBroadcast(Intent(ACTION_PAIRS_UPDATED).setPackage(packageName))
+                AutoCaptureResult.DUPLICATE_SILENT ->
+                    Log.d(DIALOG_TAG, "auto capture skip duplicate: $civilian / $spy")
+                AutoCaptureResult.FAILED_SILENT ->
+                    Log.d(DIALOG_TAG, "auto capture skip invalid: $civilian / $spy")
             }
             val fresh = findWePlayRoot()
             if (fresh != null) {
@@ -562,12 +636,17 @@ class SpyAccessibilityService : AccessibilityService() {
     private fun clearGameBubbleState() {
         clearActiveWordState()
         cachedGameBubble = null
+        lookupSettledForWord = null
     }
 
     private fun maybeShowStandby(
         root: AccessibilityNodeInfo? = null,
         @Suppress("UNUSED_PARAMETER") voteUi: Boolean = root?.let { WePlaySeatHelper.hasVoteUiReady(it) } == true,
     ) {
+        if (lookupPausedUntilNextRound) {
+            showStandbyFab()
+            return
+        }
         if (cachedGameBubble != null) {
             restoreCachedBubble()
             return
@@ -579,11 +658,19 @@ class SpyAccessibilityService : AccessibilityService() {
 
     private fun ensureBubbleVisible() {
         if (!Settings.canDrawOverlays(this)) return
-        if (bubbleVisible && OverlayService.isBubbleOnScreen()) return
-        if (cachedGameBubble != null) {
-            restoreCachedBubble()
-        } else {
+        if (bubbleVisible && OverlayService.isBubbleOnScreen()) {
+            if (cachedGameBubble != null && !overlayStandby) return
+            if (lookupJob?.isActive == true) return
+            if (lastSelfWord != null && lookupSettledForWord == lastSelfWord) return
+        }
+        if (lookupPausedUntilNextRound) {
             showStandbyFab()
+            return
+        }
+        when {
+            cachedGameBubble != null -> restoreCachedBubble()
+            lastSelfWord != null -> Unit
+            else -> showStandbyFab()
         }
     }
 
@@ -600,10 +687,10 @@ class SpyAccessibilityService : AccessibilityService() {
             ensureOverlayService()
             OverlayService.update(
                 this@SpyAccessibilityService,
-                getString(R.string.overlay_window_title),
+                "",
                 null,
                 emptyList(),
-                getString(R.string.overlay_standby_hint),
+                getString(R.string.word_searching),
                 animate = false,
             )
             overlayStandby = true
@@ -669,6 +756,8 @@ class SpyAccessibilityService : AccessibilityService() {
 
     private fun requestHide() {
         if (!bubbleVisible) return
+        if (OverlayService.isMenuExpanded()) return
+        if (overlayStandby) return
         if (isWePlayForeground()) return
         if (hideJob?.isActive == true) return
         hideJob = mainScope.launch {
@@ -679,12 +768,14 @@ class SpyAccessibilityService : AccessibilityService() {
 
     private fun performHide() {
         cancelPendingHide()
+        if (OverlayService.isMenuExpanded()) return
+        if (overlayStandby) return
         if (isWePlayForeground()) {
+            wePlayAbsentStreak = 0
             ensureBubbleVisible()
             return
         }
-        if (!bubbleVisible && lastSelfWord == null && cachedGameBubble == null) return
-        clearGameBubbleState()
+        if (!bubbleVisible) return
         overlayStandby = false
         bubbleVisible = false
         if (Settings.canDrawOverlays(this)) {
@@ -693,6 +784,8 @@ class SpyAccessibilityService : AccessibilityService() {
     }
 
     private fun refreshLookupAfterSync() {
+        if (lookupPausedUntilNextRound) return
+        if (lookupSettledForWord != null) return
         val word = lastSelfWord ?: cachedGameBubble?.myWord ?: return
         cachedGameBubble = null
         lastRecordedKey = null
@@ -701,21 +794,29 @@ class SpyAccessibilityService : AccessibilityService() {
     }
 
     private fun maybeLookup(selfWord: String) {
-        if (selfWord == lastSelfWord && cachedGameBubble != null) return
+        if (lookupPausedUntilNextRound) return
+        if (lookupSettledForWord == selfWord) return
+        if (selfWord == lastSelfWord) {
+            if (cachedGameBubble != null) return
+            if (lookupJob?.isActive == true) return
+        }
         lastSelfWord = selfWord
+        showGameBubble(selfWord, null, emptyList(), getString(R.string.word_searching))
         lookupJob?.cancel()
         lookupJob = scanScope.launch {
             when (val result = repository.lookupOthers(selfWord)) {
                 is LookupResult.Found -> {
                     if (selfWord != lastSelfWord) return@launch
+                    lookupSettledForWord = selfWord
                     maybeRecordLookup(result.myWord, result.otherWordStrings)
                     showGameBubble(result.myWord, result.myRole, result.otherWords)
                     sendLookupBroadcast(result.myWord, result.myRole, result.otherWords)
                 }
                 is LookupResult.NotFound -> {
                     if (selfWord != lastSelfWord) return@launch
+                    lookupSettledForWord = selfWord
                     maybeRecordLookup(selfWord, emptyList())
-                    showGameBubble(selfWord, null, emptyList(), getString(R.string.not_in_db))
+                    showGameBubble(selfWord, null, emptyList(), getString(R.string.word_not_in_list))
                     sendLookupBroadcast(selfWord, null, emptyList())
                 }
                 LookupResult.NotInGame -> mainScope.launch { maybeShowStandby() }
@@ -760,6 +861,7 @@ class SpyAccessibilityService : AccessibilityService() {
         private const val POLL_IDLE_MS = 250L
         private const val POLL_NO_WEPLAY_MS = 600L
         private const val HIDE_DEBOUNCE_MS = 800L
+        private const val WEPLAY_HIDE_MISS_STREAK = 8
         private const val OVERLAY_BOOT_DELAY_MS = 400L
         private const val READY_CLICK_COOLDOWN_MS = 300L
         private const val SIT_CLICK_COOLDOWN_MS = 1000L

@@ -4,12 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.phaohn.spyhelper.databinding.FragmentAutoBinding
-import kotlinx.coroutines.launch
 
 class AutoFragment : Fragment() {
 
@@ -19,55 +20,74 @@ class AutoFragment : Fragment() {
     private val voteTapAtChips = mutableListOf<Chip>()
     private var suppressVoteSeatFeedback = false
     private var suppressVoteTapAtFeedback = false
-    private var suppressVoteSwitchFeedback = false
+    private var suppressVoteLockFeedback = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentAutoBinding.inflate(inflater, container, false)
-        binding.switchAutoReady.isChecked = SpyPrefs.isAutoReadyEnabled(requireContext())
-        binding.switchAutoReady.setOnCheckedChangeListener { _, checked ->
+
+        AutoToggleUi.wireLabelToggle(binding.toggleAutoReady) { checked ->
             SpyPrefs.setAutoReadyEnabled(requireContext(), checked)
             AutoPrefsNotifier.notifyChanged(requireContext())
         }
-        binding.switchAutoSit.isChecked = SpyPrefs.isAutoSitEnabled(requireContext())
-        binding.switchAutoSit.setOnCheckedChangeListener { _, checked ->
+        AutoToggleUi.wireLabelToggle(binding.toggleAutoSit) { checked ->
             SpyPrefs.setAutoSitEnabled(requireContext(), checked)
             AutoPrefsNotifier.notifyChanged(requireContext())
         }
+        binding.toggleVoteLock.setOnClickListener {
+            if (suppressVoteLockFeedback) return@setOnClickListener
+            AutoToggleUi.pulse(binding.toggleVoteLock)
+            onVoteLockChanged(!SpyPrefs.isVoteSettingsLocked(requireContext()))
+        }
+
+        binding.btnAutoA11y.setOnClickListener {
+            AccessibilitySetupHelper.openAccessibilityServiceDetails(requireContext())
+        }
         setupVoteSeatChips()
         setupVoteTapAtChips()
-        binding.switchAutoVote.setOnCheckedChangeListener { _, checked ->
-            val ctx = requireContext()
-            if (checked && !SpyPrefs.isVoteSeatChosen(ctx)) {
-                suppressVoteSwitchFeedback = true
-                binding.switchAutoVote.isChecked = false
-                suppressVoteSwitchFeedback = false
-                return@setOnCheckedChangeListener
-            }
-            if (suppressVoteSwitchFeedback) return@setOnCheckedChangeListener
-            SpyPrefs.setAutoVoteEnabled(ctx, checked)
-            AutoPrefsNotifier.notifyChanged(ctx)
-        }
         refreshVoteUi()
+        refreshA11yBanner()
         return binding.root
     }
 
     override fun onResume() {
         super.onResume()
         refreshAutoUi()
+        refreshA11yBanner()
+    }
+
+    private fun refreshA11yBanner() {
+        if (_binding == null) return
+        binding.autoA11yBanner.isVisible = !SpyAccessibilityService.isEnabled(requireContext())
     }
 
     fun refreshAutoUi() {
         if (_binding == null) return
         val ctx = requireContext()
-        val autoReady = SpyPrefs.isAutoReadyEnabled(ctx)
-        if (binding.switchAutoReady.isChecked != autoReady) {
-            binding.switchAutoReady.isChecked = autoReady
-        }
-        val autoSit = SpyPrefs.isAutoSitEnabled(ctx)
-        if (binding.switchAutoSit.isChecked != autoSit) {
-            binding.switchAutoSit.isChecked = autoSit
-        }
+        AutoToggleUi.applyAppLabel(binding.toggleAutoReady, SpyPrefs.isAutoReadyEnabled(ctx))
+        AutoToggleUi.applyAppLabel(binding.toggleAutoSit, SpyPrefs.isAutoSitEnabled(ctx))
         refreshVoteUi()
+    }
+
+    private fun onVoteLockChanged(locked: Boolean) {
+        val ctx = requireContext()
+        if (locked) {
+            SpyPrefs.ensureDefaultVoteSeat(ctx)
+            SpyPrefs.setVoteSeatChosen(ctx, true)
+        }
+        SpyPrefs.setVoteLockWithAutoVote(ctx, locked)
+        applyVoteSettingsLock(locked)
+        setLockToggleState(locked)
+        updateVoteSettingsVisual(locked)
+        AutoPrefsNotifier.notifyChanged(ctx)
+    }
+
+    private fun setLockToggleState(locked: Boolean) {
+        suppressVoteLockFeedback = true
+        try {
+            AutoToggleUi.applyVoteLockLabel(binding.toggleVoteLock, locked)
+        } finally {
+            suppressVoteLockFeedback = false
+        }
     }
 
     private fun setupVoteSeatChips() {
@@ -83,14 +103,13 @@ class AutoFragment : Fragment() {
             voteSeatChips += chip
         }
         group.setOnCheckedStateChangeListener { _, checkedIds ->
-            if (suppressVoteSeatFeedback) return@setOnCheckedStateChangeListener
+            if (suppressVoteSeatFeedback || SpyPrefs.isVoteSettingsLocked(ctx)) return@setOnCheckedStateChangeListener
             val checkedId = checkedIds.firstOrNull() ?: return@setOnCheckedStateChangeListener
             val chip = group.findViewById<Chip>(checkedId) ?: return@setOnCheckedStateChangeListener
             val num = chip.text.toString().toIntOrNull() ?: return@setOnCheckedStateChangeListener
             SpyPrefs.setVoteTargetSeat(ctx, num)
             SpyPrefs.setVoteSeatChosen(ctx, true)
             styleVoteSeatChips(num)
-            updateVoteSwitchEnabled(true)
         }
         group.post { layoutVoteChips(voteSeatChips, group, VOTE_SEAT_COLUMNS) }
         if (chosen && selected != null) {
@@ -103,25 +122,35 @@ class AutoFragment : Fragment() {
     private fun refreshVoteUi() {
         if (_binding == null) return
         val ctx = requireContext()
-        val chosen = SpyPrefs.isVoteSeatChosen(ctx)
-        var autoVote = SpyPrefs.isAutoVoteEnabled(ctx)
-        if (autoVote && !chosen) {
-            SpyPrefs.setAutoVoteEnabled(ctx, false)
-            autoVote = false
+        val locked = SpyPrefs.isVoteSettingsLocked(ctx)
+        if (locked != SpyPrefs.isAutoVoteEnabled(ctx)) {
+            SpyPrefs.setAutoVoteEnabled(ctx, locked)
         }
-        updateVoteSwitchEnabled(chosen)
-        suppressVoteSwitchFeedback = true
-        try {
-            binding.switchAutoVote.isChecked = autoVote
-        } finally {
-            suppressVoteSwitchFeedback = false
-        }
-        if (chosen) {
-            syncVoteSeatChips(SpyPrefs.voteTargetSeat(ctx))
-        } else {
-            clearVoteSeatSelection()
-        }
+        setLockToggleState(locked)
+        syncVoteSeatChips(SpyPrefs.voteTargetSeat(ctx))
         syncVoteTapAtChips(SpyPrefs.voteTapAtSeconds(ctx))
+        applyVoteSettingsLock(locked)
+        updateVoteSettingsVisual(locked)
+    }
+
+    private fun applyVoteSettingsLock(locked: Boolean) {
+        val pickerAlpha = if (locked) AutoToggleUi.LOCKED_PICKER_ALPHA else 1f
+        binding.votePickerPanel.alpha = pickerAlpha
+        voteSeatChips.forEach { chip ->
+            chip.isEnabled = !locked
+            chip.isClickable = !locked
+            chip.alpha = pickerAlpha
+        }
+        voteTapAtChips.forEach { chip ->
+            chip.isEnabled = !locked
+            chip.isClickable = !locked
+            chip.alpha = pickerAlpha
+        }
+    }
+
+    private fun updateVoteSettingsVisual(voteLocked: Boolean) {
+        binding.voteSettingsCard.alpha = if (voteLocked) 1f else 0.96f
+        binding.toggleVoteLock.isSelected = voteLocked
     }
 
     private fun setupVoteTapAtChips() {
@@ -136,7 +165,7 @@ class AutoFragment : Fragment() {
             voteTapAtChips += chip
         }
         group.setOnCheckedStateChangeListener { _, checkedIds ->
-            if (suppressVoteTapAtFeedback) return@setOnCheckedStateChangeListener
+            if (suppressVoteTapAtFeedback || SpyPrefs.isVoteSettingsLocked(ctx)) return@setOnCheckedStateChangeListener
             val checkedId = checkedIds.firstOrNull() ?: return@setOnCheckedStateChangeListener
             val chip = group.findViewById<Chip>(checkedId) ?: return@setOnCheckedStateChangeListener
             val sec = chip.text.toString().toIntOrNull() ?: return@setOnCheckedStateChangeListener
@@ -188,10 +217,6 @@ class AutoFragment : Fragment() {
             suppressVoteSeatFeedback = false
         }
         styleVoteSeatChips(-1)
-    }
-
-    private fun updateVoteSwitchEnabled(enabled: Boolean) {
-        binding.switchAutoVote.isEnabled = enabled
     }
 
     private fun syncVoteSeatChips(selected: Int) {

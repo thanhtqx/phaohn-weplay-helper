@@ -32,13 +32,18 @@ class MainActivity : AppCompatActivity() {
     private var profileFragment: ProfileFragment? = null
     private lateinit var auth: AuthManager
     private var selectedNavId = R.id.nav_home
+    private var fragmentsReady = false
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
                 SpyAccessibilityService.ACTION_PAIRS_UPDATED -> {
-                    wordsHubFragment?.refreshWordList()
-                    refreshHomeUi()
+                    if (selectedNavId == R.id.nav_words) {
+                        wordsHubFragment?.refreshWordList()
+                    }
+                    if (selectedNavId == R.id.nav_home) {
+                        refreshHomeUi()
+                    }
                 }
                 SpyAccessibilityService.ACTION_AUTO_PREFS_CHANGED -> {
                     autoFragment?.refreshAutoUi()
@@ -61,10 +66,11 @@ class MainActivity : AppCompatActivity() {
             finish()
             return
         }
+        selectedNavId = savedInstanceState?.getInt(KEY_SELECTED_NAV, R.id.nav_home) ?: R.id.nav_home
+        initMainUi(savedInstanceState)
         lifecycleScope.launch {
             try {
                 auth.verifySession()
-                initMainUi(savedInstanceState)
             } catch (e: AccountLockedException) {
                 auth.clearSession()
                 startActivity(
@@ -90,7 +96,9 @@ class MainActivity : AppCompatActivity() {
         val baseUrl = SpyPrefs.syncBaseUrl(this)
         val token = auth.getToken()
         lifecycleScope.launch {
-            PhaoHNApp.repo(application).flushPendingPushToServer(this@MainActivity, baseUrl, token)
+            val repo = PhaoHNApp.repo(application)
+            repo.mergeFromServerQuiet(baseUrl, token, this@MainActivity)
+            repo.flushPendingPushToServer(this@MainActivity, baseUrl, token)
             AdminNotificationHelper.pullAfterServerTouch(
                 this@MainActivity,
                 baseUrl,
@@ -101,21 +109,21 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
         setupBottomNavInsets()
-
-        selectedNavId = savedInstanceState?.getInt(KEY_SELECTED_NAV, R.id.nav_home) ?: R.id.nav_home
         setupBottomNav()
-
-        if (savedInstanceState == null) {
-            homeFragment = HomeFragment.newInstance()
-            onNavSelected(R.id.nav_home)
-        } else {
-            updateNavVisuals(selectedNavId)
-            updateToolbarTitle(selectedNavId)
-        }
+        ensureFragments()
+        showTab(selectedNavId)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             requestNotificationPermission()
         }
+
+        if (BuildConfig.A11Y_DIRECT && savedInstanceState == null && !SpyAccessibilityService.isEnabled(this)) {
+            binding.root.post {
+                AccessibilitySetupHelper.openAccessibilityServiceDetails(this)
+            }
+        }
+
+        binding.root.post { maybeShowPermissionsSetup() }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -154,32 +162,50 @@ class MainActivity : AppCompatActivity() {
         updateNavVisuals(selectedNavId)
     }
 
+    private fun ensureFragments() {
+        if (fragmentsReady) return
+        val fm = supportFragmentManager
+        homeFragment = fm.findFragmentByTag(TAG_HOME) as? HomeFragment ?: HomeFragment.newInstance()
+        wordsHubFragment = fm.findFragmentByTag(TAG_WORDS) as? WordsHubFragment ?: WordsHubFragment.newInstance()
+        autoFragment = fm.findFragmentByTag(TAG_AUTO) as? AutoFragment ?: AutoFragment.newInstance()
+        historyFragment = fm.findFragmentByTag(TAG_HISTORY) as? HistoryFragment ?: HistoryFragment.newInstance()
+        profileFragment = fm.findFragmentByTag(TAG_PROFILE) as? ProfileFragment ?: ProfileFragment.newInstance()
+
+        val tx = fm.beginTransaction().setReorderingAllowed(true)
+        if (!homeFragment!!.isAdded) tx.add(R.id.fragmentContainer, homeFragment!!, TAG_HOME)
+        if (!wordsHubFragment!!.isAdded) tx.add(R.id.fragmentContainer, wordsHubFragment!!, TAG_WORDS).hide(wordsHubFragment!!)
+        if (!autoFragment!!.isAdded) tx.add(R.id.fragmentContainer, autoFragment!!, TAG_AUTO).hide(autoFragment!!)
+        if (!historyFragment!!.isAdded) tx.add(R.id.fragmentContainer, historyFragment!!, TAG_HISTORY).hide(historyFragment!!)
+        if (!profileFragment!!.isAdded) tx.add(R.id.fragmentContainer, profileFragment!!, TAG_PROFILE).hide(profileFragment!!)
+        tx.commit()
+        fragmentsReady = true
+    }
+
     private fun onNavSelected(itemId: Int) {
+        if (itemId == selectedNavId) return
         selectedNavId = itemId
         updateNavVisuals(itemId)
         updateToolbarTitle(itemId)
+        showTab(itemId)
+        refreshVisibleTab()
+    }
+
+    private fun showTab(itemId: Int) {
+        ensureFragments()
+        val tx = supportFragmentManager.beginTransaction().setReorderingAllowed(true)
+        tx.hide(homeFragment!!)
+        tx.hide(wordsHubFragment!!)
+        tx.hide(autoFragment!!)
+        tx.hide(historyFragment!!)
+        tx.hide(profileFragment!!)
         when (itemId) {
-            R.id.nav_home -> showFragment(
-                homeFragment ?: HomeFragment.newInstance().also { homeFragment = it },
-                R.string.nav_home,
-            )
-            R.id.nav_words -> showFragment(
-                wordsHubFragment ?: WordsHubFragment.newInstance().also { wordsHubFragment = it },
-                R.string.nav_words,
-            )
-            R.id.nav_auto -> showFragment(
-                autoFragment ?: AutoFragment.newInstance().also { autoFragment = it },
-                R.string.nav_auto,
-            )
-            R.id.nav_history -> showFragment(
-                historyFragment ?: HistoryFragment.newInstance().also { historyFragment = it },
-                R.string.nav_history,
-            )
-            R.id.nav_about -> showFragment(
-                profileFragment ?: ProfileFragment.newInstance().also { profileFragment = it },
-                R.string.nav_profile,
-            )
+            R.id.nav_home -> tx.show(homeFragment!!)
+            R.id.nav_words -> tx.show(wordsHubFragment!!)
+            R.id.nav_auto -> tx.show(autoFragment!!)
+            R.id.nav_history -> tx.show(historyFragment!!)
+            R.id.nav_about -> tx.show(profileFragment!!)
         }
+        tx.commit()
     }
 
     private fun updateNavVisuals(itemId: Int) {
@@ -198,12 +224,6 @@ class MainActivity : AppCompatActivity() {
         binding.toolbar.title = ""
     }
 
-    private fun showFragment(fragment: Fragment, @Suppress("UNUSED_PARAMETER") titleRes: Int) {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, fragment)
-            .commit()
-    }
-
     override fun onResume() {
         super.onResume()
         val filter = IntentFilter().apply {
@@ -217,10 +237,8 @@ class MainActivity : AppCompatActivity() {
             @Suppress("UnspecifiedRegisterReceiverFlag")
             registerReceiver(receiver, filter)
         }
-        refreshHomeUi()
-        wordsHubFragment?.refreshWordList()
-        autoFragment?.refreshAutoUi()
-        historyFragment?.loadHistory()
+        refreshVisibleTab()
+        maybeShowPermissionsSetup()
     }
 
     override fun onPause() {
@@ -228,14 +246,38 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
     }
 
+    private fun refreshVisibleTab() {
+        when (selectedNavId) {
+            R.id.nav_home -> refreshHomeUi()
+            R.id.nav_words -> wordsHubFragment?.refreshWordList()
+            R.id.nav_auto -> autoFragment?.refreshAutoUi()
+            R.id.nav_history -> historyFragment?.loadHistory()
+        }
+    }
+
     fun refreshHomeUi() {
         homeFragment?.refreshDashboard()
+    }
+
+    fun showPermissionsSetup() {
+        selectedNavId = R.id.nav_home
+        updateNavVisuals(R.id.nav_home)
+        showTab(R.id.nav_home)
+        PermissionsSetupSheet.show(supportFragmentManager)
+    }
+
+    private fun maybeShowPermissionsSetup() {
+        if (PermissionHelper.check(this).allGranted) return
+        if (supportFragmentManager.findFragmentByTag(PermissionsSetupSheet.TAG) != null) return
+        showPermissionsSetup()
     }
 
     private fun updateLookup(intent: Intent) {
         val word = intent.getStringExtra(SpyAccessibilityService.EXTRA_MY_WORD).orEmpty()
         if (word.isEmpty()) return
-        historyFragment?.loadHistory()
+        if (selectedNavId == R.id.nav_history) {
+            historyFragment?.loadHistory()
+        }
     }
 
     private data class NavTab(
@@ -248,5 +290,10 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val KEY_SELECTED_NAV = "selected_nav"
+        private const val TAG_HOME = "tab_home"
+        private const val TAG_WORDS = "tab_words"
+        private const val TAG_AUTO = "tab_auto"
+        private const val TAG_HISTORY = "tab_history"
+        private const val TAG_PROFILE = "tab_profile"
     }
 }

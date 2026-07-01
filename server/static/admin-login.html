@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Đăng nhập Admin — Pháo™</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="/static/style.css?v=38" />
+</head>
+<body class="admin-login-page phaohn-app">
+  <div class="admin-login-shell">
+    <div class="admin-login-card">
+      <div class="brand brand-center brand-light">
+        <span class="brand-mark brand-mark-phao brand-mark-lg admin-login-mark" aria-hidden="true"><i class="bi bi-fire"></i></span>
+        <span class="brand-text">
+          <strong class="brand-name">Pháo<sup class="brand-tm">™</sup> Admin</strong>
+          <small>Bảng quản trị hệ thống</small>
+        </span>
+      </div>
+
+      <form id="adminLoginForm" class="login-form">
+        <label class="field field-light">
+          Tài khoản Admin
+          <input id="username" name="username" autocomplete="username" required />
+        </label>
+        <label class="field field-light">
+          Mật khẩu
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <p id="loginError" class="alert alert-error hidden"></p>
+        <button type="submit" class="btn btn-primary btn-block">Đăng nhập</button>
+      </form>
+
+      <p class="admin-login-hint">Chỉ tài khoản có quyền Admin mới truy cập được.</p>
+    </div>
+    <p class="login-copy admin-login-copy">© Pháo™ · <a href="/login" class="admin-login-user-link">Đăng nhập người dùng</a></p>
+  </div>
+  <script src="/static/admin-login.js"></script>
+</body>
+</html>

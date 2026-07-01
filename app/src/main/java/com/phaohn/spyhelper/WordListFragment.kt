@@ -4,10 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
-import android.text.SpannableStringBuilder
-import android.text.Spanned
 import android.text.TextWatcher
-import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -71,7 +68,8 @@ class WordListFragment : Fragment() {
         )
         binding.recyclerPairs.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerPairs.adapter = adapter
-        binding.recyclerPairs.setHasFixedSize(false)
+        binding.recyclerPairs.setHasFixedSize(true)
+        binding.recyclerPairs.itemAnimator = null
         binding.btnAddWord.setOnClickListener { showAddDialog() }
         binding.btnSync.setOnClickListener { syncWithCloud() }
         binding.btnImport.setOnClickListener { pickImportFile() }
@@ -105,16 +103,11 @@ class WordListFragment : Fragment() {
         loadPairs(binding.searchInput.text?.toString().orEmpty())
     }
 
-    override fun onResume() {
-        super.onResume()
-        loadPairs(binding.searchInput.text?.toString().orEmpty())
-    }
-
     fun loadPairs(query: String = "") {
         val b = _binding ?: return
         lifecycleScope.launch {
             val list = repository.searchPairs(query)
-            val total = repository.pairCount()
+            val total = if (query.isEmpty()) list.size else repository.pairCount()
             if (_binding == null) return@launch
             adapter.submit(list)
             val empty = list.isEmpty()
@@ -141,6 +134,7 @@ class WordListFragment : Fragment() {
 
     private suspend fun performLookup(query: String, recordHistory: Boolean) {
         if (_binding == null) return
+        showLookupSearching(query)
         when (val result = repository.lookupOthers(query)) {
             is LookupResult.Found -> {
                 showLookupResult(result.myWord, result.myRole, result.otherWords)
@@ -158,29 +152,54 @@ class WordListFragment : Fragment() {
         }
     }
 
+    private fun showLookupSearching(query: String) {
+        val b = _binding ?: return
+        val ctx = requireContext()
+        WordLookupUi.bindMyWord(
+            b.lookupMyWord,
+            query.ifBlank { getString(R.string.word_placeholder) },
+            ctx,
+        )
+        WordLookupUi.bindSearchWords(
+            b.lookupResultsScroll,
+            b.lookupResults,
+            getString(R.string.word_searching),
+            ctx,
+        )
+        b.lookupResultCard.isVisible = true
+    }
+
     private fun showLookupResult(myWord: String, myRole: WordRole, others: List<LabeledWord>) {
         val b = _binding ?: return
         val ctx = requireContext()
-        b.lookupMyWord.text = SpannableStringBuilder().apply {
-            append(getString(R.string.my_word))
-            append(": ")
-            val start = length
-            append(myWord)
-            setSpan(
-                ForegroundColorSpan(RoleTextFormatter.colorForRole(ctx, myRole)),
-                start,
-                length,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-            )
-        }
-        b.lookupResults.text = RoleTextFormatter.formatOthersApp(ctx, others)
+        WordLookupUi.bindMyWord(
+            b.lookupMyWord,
+            RoleTextFormatter.coloredWordApp(ctx, myWord, myRole),
+            ctx,
+        )
+        WordLookupUi.bindSearchWords(
+            b.lookupResultsScroll,
+            b.lookupResults,
+            if (others.isEmpty()) {
+                getString(R.string.word_placeholder)
+            } else {
+                RoleTextFormatter.formatOthersApp(ctx, others)
+            },
+            ctx,
+        )
         b.lookupResultCard.isVisible = true
     }
 
     private fun showLookupNotFound(myWord: String) {
         val b = _binding ?: return
-        b.lookupMyWord.text = getString(R.string.lookup_my_word, myWord)
-        b.lookupResults.text = getString(R.string.not_in_db)
+        val ctx = requireContext()
+        WordLookupUi.bindMyWord(b.lookupMyWord, myWord, ctx)
+        WordLookupUi.bindSearchWords(
+            b.lookupResultsScroll,
+            b.lookupResults,
+            getString(R.string.word_not_in_list),
+            ctx,
+        )
         b.lookupResultCard.isVisible = true
     }
 
@@ -232,9 +251,20 @@ class WordListFragment : Fragment() {
         showSyncProgress()
         lifecycleScope.launch {
             try {
+                val ctx = requireContext()
+                val baseUrl = SpyPrefs.syncBaseUrl(ctx)
+                val token = auth.getToken()
                 val result = repository.syncWithServer(
-                    SpyPrefs.syncBaseUrl(requireContext()),
-                    auth.getToken(),
+                    baseUrl,
+                    token,
+                    ctx,
+                    isAdmin = auth.isAdmin(),
+                )
+                AdminNotificationHelper.pullAfterServerTouch(
+                    ctx,
+                    baseUrl,
+                    token,
+                    activity,
                 )
                 dismissSyncProgress()
                 showSyncResultDialog(result)
@@ -244,6 +274,8 @@ class WordListFragment : Fragment() {
                 )
                 loadPairs(b.searchInput.text?.toString().orEmpty())
                 (activity as? MainActivity)?.refreshHomeUi()
+            } catch (_: AccountLockedException) {
+                dismissSyncProgress()
             } catch (e: Exception) {
                 dismissSyncProgress()
                 val msg = e.message ?: e.javaClass.simpleName
@@ -279,7 +311,7 @@ class WordListFragment : Fragment() {
                 Toast.makeText(requireContext(), R.string.import_empty, Toast.LENGTH_SHORT).show()
                 return@launch
             }
-            val result = repository.importPairs(rows)
+            val result = repository.importPairs(rows, isAdmin = auth.isAdmin())
             showSaveResult(result)
             if (result.hasSuccess) {
                 loadPairs(binding.searchInput.text?.toString().orEmpty())
@@ -353,7 +385,7 @@ class WordListFragment : Fragment() {
                             Toast.makeText(requireContext(), R.string.add_multi_invalid, Toast.LENGTH_SHORT).show()
                             return@launch
                         }
-                        val result = repository.importPairs(parse.pairs)
+                        val result = repository.importPairs(parse.pairs, isAdmin = auth.isAdmin())
                             .withInvalid(parse.invalidLines)
                         showSaveResult(result)
                         if (result.hasSuccess) {
@@ -363,7 +395,7 @@ class WordListFragment : Fragment() {
                     } else {
                         val c = dialogBinding.inputCivilian.text?.toString().orEmpty()
                         val s = dialogBinding.inputSpy.text?.toString().orEmpty()
-                        val result = repository.addManual(c, s)
+                        val result = repository.addManual(c, s, isAdmin = auth.isAdmin())
                         showSaveResult(result)
                         if (result.hasSuccess) {
                             loadPairs(binding.searchInput.text?.toString().orEmpty())
@@ -378,9 +410,16 @@ class WordListFragment : Fragment() {
     }
 
     private fun showSaveResult(result: PairSaveResult) {
+        val msg = buildString {
+            append(result.formatMessage(requireContext()))
+            if (result.hasPending) {
+                append("\n\n")
+                append(getString(R.string.word_pending_saved))
+            }
+        }
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.save_result_title)
-            .setMessage(result.formatMessage(requireContext()))
+            .setMessage(msg)
             .setPositiveButton(R.string.ok, null)
             .show()
     }

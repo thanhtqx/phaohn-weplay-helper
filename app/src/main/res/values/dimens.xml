@@ -30,6 +30,7 @@
     <dimen name="overlay_sync_size">26dp</dimen>
     <dimen name="overlay_sync_padding">5dp</dimen>
     <dimen name="search_text">12sp</dimen>
+    <dimen name="lookup_words_max_height">200dp</dimen>
 
     <dimen name="table_stt_width">36dp</dimen>
     <dimen name="table_time_width">108dp</dimen>
@@ -50,10 +51,15 @@
     <dimen name="overlay_width">260dp</dimen>
     <dimen name="overlay_fab_size">44dp</dimen>
     <dimen name="overlay_fab_icon">24dp</dimen>
-    <dimen name="overlay_menu_width">260dp</dimen>
+    <dimen name="overlay_menu_width">308dp</dimen>
+    <dimen name="overlay_chip_min_h">26dp</dimen>
+    <dimen name="overlay_chip_text">10sp</dimen>
+    <dimen name="overlay_word_legend">8sp</dimen>
+    <dimen name="overlay_word_body">12sp</dimen>
+    <dimen name="overlay_word_list">11sp</dimen>
     <dimen name="overlay_list_height">260dp</dimen>
     <dimen name="overlay_menu_scroll_height">380dp</dimen>
-    <dimen name="overlay_menu_max_height">280dp</dimen>
+    <dimen name="overlay_menu_max_height">380dp</dimen>
     <dimen name="overlay_pad_h">14dp</dimen>
     <dimen name="overlay_pad_v">6dp</dimen>
 </resources>

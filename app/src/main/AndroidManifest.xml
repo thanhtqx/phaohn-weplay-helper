@@ -12,6 +12,21 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
         </intent>
+        <intent>
+            <action android:name="android.settings.MANAGE_RESTRICTED_SETTING" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.APPLICATION_DETAILS_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.ACCESSIBILITY_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="miui.intent.action.APP_PERM_EDITOR" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.ACCESSIBILITY_DETAILS_SETTINGS" />
+        </intent>
     </queries>
 
     <application
@@ -38,6 +53,12 @@
         <activity
             android:name=".MainActivity"
             android:exported="false"
+            android:theme="@style/Theme.PhaoHN" />
+
+        <activity
+            android:name=".AccessibilityOnboardingActivity"
+            android:exported="false"
+            android:label="@string/accessibility_restricted_title"
             android:theme="@style/Theme.PhaoHN" />
 
         <service

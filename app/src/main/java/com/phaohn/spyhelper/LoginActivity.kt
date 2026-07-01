@@ -3,7 +3,6 @@ package com.phaohn.spyhelper
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.phaohn.spyhelper.databinding.ActivityLoginBinding
@@ -18,15 +17,37 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         auth = AuthManager(this)
-        if (auth.isLoggedIn()) {
-            goMain()
-            return
-        }
-        binding = ActivityLoginBinding.inflate(layoutInflater)
-        setContentView(binding.root)
         repository = PhaoHNApp.repo(application)
 
+        val lockMessage = intent.getStringExtra(AccountLockHandler.EXTRA_LOCK_MESSAGE)
+        if (auth.isLoggedIn()) {
+            setContentView(R.layout.activity_boot)
+            lifecycleScope.launch {
+                try {
+                    auth.verifySession()
+                    goMain()
+                } catch (e: AccountLockedException) {
+                    auth.clearSession()
+                    openLoginForm(e.lockMessage)
+                } catch (_: AuthException) {
+                    auth.clearSession()
+                    openLoginForm(lockMessage)
+                } catch (_: Exception) {
+                    openLoginForm(lockMessage)
+                }
+            }
+            return
+        }
+        openLoginForm(lockMessage)
+    }
+
+    private fun openLoginForm(lockMessage: String?) {
+        binding = ActivityLoginBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         binding.btnLogin.setOnClickListener { attemptLogin() }
+        if (!lockMessage.isNullOrBlank()) {
+            showError(lockMessage)
+        }
     }
 
     private fun attemptLogin() {
@@ -41,18 +62,22 @@ class LoginActivity : AppCompatActivity() {
         binding.loginError.visibility = View.GONE
         lifecycleScope.launch {
             try {
-                auth.login(username, password)
-                try {
-                    repository.pullServerWords(
-                        SpyPrefs.syncBaseUrl(this@LoginActivity),
-                        auth.getToken(),
-                    )
-                } catch (e: Exception) {
-                    auth.clearSession()
-                    showError(getString(R.string.login_sync_fail, e.message ?: ""))
-                    return@launch
-                }
+                val user = auth.login(username, password)
+                SpyPrefs.setLastPushUsername(this@LoginActivity, user.username)
+                val baseUrl = SpyPrefs.syncBaseUrl(this@LoginActivity)
+                val token = auth.getToken()
+                repository.mergeFromServerQuiet(baseUrl, token, this@LoginActivity)
+                repository.flushPendingPushToServer(this@LoginActivity, baseUrl, token)
+                AdminNotificationHelper.pullAfterServerTouch(
+                    this@LoginActivity,
+                    baseUrl,
+                    token,
+                    this@LoginActivity,
+                )
                 goMain()
+            } catch (e: AccountLockedException) {
+                auth.clearSession()
+                showError(e.lockMessage)
             } catch (e: Exception) {
                 auth.clearSession()
                 val msg = when (e.message) {

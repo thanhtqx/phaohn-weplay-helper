@@ -51,10 +51,10 @@ object OverlayMetrics {
     private const val MENU_WIDTH_MIN_DP = 220f
     private const val MENU_WIDTH_MAX_DP = 300f
 
-    private const val PANEL_HEIGHT_RATIO = 0.34f
-    private const val PANEL_HEIGHT_MAX_RATIO = 0.42f
-    private const val PANEL_HEIGHT_MIN_DP = 200f
-    private const val PANEL_HEIGHT_MAX_DP = 320f
+    private const val PANEL_HEIGHT_RATIO = 0.48f
+    private const val PANEL_HEIGHT_MAX_RATIO = 0.56f
+    private const val PANEL_HEIGHT_MIN_DP = 260f
+    private const val PANEL_HEIGHT_MAX_DP = 420f
 
     private const val FAB_SIZE_DP = 44f
 }

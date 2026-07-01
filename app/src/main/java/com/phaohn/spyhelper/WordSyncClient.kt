@@ -21,6 +21,7 @@ data class RemoteSyncPushResult(
 class WordSyncClient(
     private val baseUrl: String,
     private val token: String = "",
+    private val lockContext: android.content.Context? = null,
 ) {
     private val root = baseUrl.trimEnd('/')
 
@@ -38,18 +39,39 @@ class WordSyncClient(
         return out
     }
 
-    fun pushPairs(pairs: List<WordPair>): RemoteSyncPushResult {
+    fun pushPairs(pairs: List<WordPair>): RemoteSyncPushResult =
+        pushPairsPayload(pairs, "$root/api/sync/push", emptyMap())
+
+    /** Đẩy lên server không cần đăng nhập (chỉ upload, không pull). */
+    fun pushPairsOpen(
+        pairs: List<WordPair>,
+        pushKey: String,
+        targetUsername: String = "",
+    ): RemoteSyncPushResult {
+        val headers = mutableMapOf("X-PhaoHN-Push-Key" to pushKey)
+        if (targetUsername.isNotBlank()) {
+            headers["X-PhaoHN-Target-User"] = targetUsername.trim()
+        }
+        return pushPairsPayload(pairs, "$root/api/sync/push-open", headers)
+    }
+
+    private fun pushPairsPayload(
+        pairs: List<WordPair>,
+        url: String,
+        extraHeaders: Map<String, String>,
+    ): RemoteSyncPushResult {
         val body = JSONObject()
         val arr = JSONArray()
         pairs.forEach { pair ->
             arr.put(
                 JSONObject()
                     .put("civilian_word", pair.civilianWord)
-                    .put("spy_word", pair.spyWord),
+                    .put("spy_word", pair.spyWord)
+                    .put("origin", pair.pairSource),
             )
         }
         body.put("pairs", arr)
-        val json = request("POST", "$root/api/sync/push", body.toString())
+        val json = request("POST", url, body.toString(), extraHeaders)
         val obj = JSONObject(json)
         return RemoteSyncPushResult(
             added = obj.optInt("added"),
@@ -58,7 +80,12 @@ class WordSyncClient(
         )
     }
 
-    private fun request(method: String, url: String, body: String? = null): String {
+    private fun request(
+        method: String,
+        url: String,
+        body: String? = null,
+        extraHeaders: Map<String, String> = emptyMap(),
+    ): String {
         val conn = (URL(url).openConnection() as HttpURLConnection).apply {
             requestMethod = method
             connectTimeout = 12_000
@@ -67,6 +94,7 @@ class WordSyncClient(
             if (token.isNotEmpty()) {
                 setRequestProperty("Authorization", "Bearer $token")
             }
+            extraHeaders.forEach { (k, v) -> setRequestProperty(k, v) }
             if (body != null) {
                 doOutput = true
                 setRequestProperty("Content-Type", "application/json; charset=utf-8")
@@ -80,6 +108,12 @@ class WordSyncClient(
             val stream = if (code in 200..299) conn.inputStream else conn.errorStream
             val text = stream?.bufferedReader(Charsets.UTF_8)?.use(BufferedReader::readText).orEmpty()
             if (code !in 200..299) {
+                if (AccountLockHandler.maybeHandle(lockContext, code, text)) {
+                    throw AccountLockedException(
+                        ApiError.accountLockedMessage(code, text)
+                            ?: "Tài khoản đã bị Admin khóa.",
+                    )
+                }
                 throw SyncException("HTTP $code: $text")
             }
             return text

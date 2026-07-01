@@ -19,8 +19,23 @@ interface WordDao {
     @Query("UPDATE word_pairs SET civilianWord = :c, spyWord = :s WHERE id = :id")
     suspend fun update(id: Long, c: String, s: String)
 
+    @Query(
+        """
+        UPDATE word_pairs
+        SET approvalStatus = :status, pairSource = :source
+        WHERE id = :id
+        """,
+    )
+    suspend fun updateApproval(id: Long, status: String, source: String)
+
     @Query("DELETE FROM word_pairs WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("UPDATE word_pairs SET serverSynced = 1 WHERE id = :id")
+    suspend fun markServerSynced(id: Long)
+
+    @Query("UPDATE word_pairs SET serverSynced = 0 WHERE id = :id")
+    suspend fun markServerUnsynced(id: Long)
 
     @Query("DELETE FROM word_pairs")
     suspend fun clearAll()

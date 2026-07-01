@@ -1,7 +1,7 @@
 import time
 
 from .database import get_conn
-from .repository import list_pairs
+from .repository import list_pairs_approved
 
 MAX_HISTORY = 80
 
@@ -9,7 +9,7 @@ MAX_HISTORY = 80
 def _find_pairs_by_word(user: dict, word: str) -> list[dict]:
     return [
         p
-        for p in list_pairs(user)
+        for p in list_pairs_approved(user)
         if p["civilian_word"] == word or p["spy_word"] == word
     ]
 

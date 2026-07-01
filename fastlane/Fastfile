@@ -1,0 +1,18 @@
+default_platform(:android)
+
+platform :android do
+  desc "Upload AAB direct build lên CH Play (cần PLAY_JSON_KEY)"
+  lane :upload_direct do
+    aab = ENV.fetch("PHAOHN_AAB", "../releases/PhaoHN-v2.3.34-direct.aab")
+    upload_to_play_store(
+      aab: aab,
+      track: ENV.fetch("PLAY_TRACK", "internal"),
+      json_key: ENV.fetch("PLAY_JSON_KEY"),
+      package_name: "com.phaohn.spyhelper",
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      release_status: "draft",
+    )
+  end
+end

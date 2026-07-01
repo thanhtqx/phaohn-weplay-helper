@@ -23,4 +23,14 @@ class WordMatcherTest {
             WordMatcher.isDuplicatePair("A", "B", "a", "b"),
         )
     }
+
+    @Test
+    fun duplicateRequiresExactCharsIncludingWhitespace() {
+        assertFalse(
+            WordMatcher.isDuplicatePair("trứng vịt", "trứng ngỗng", "trứng vịt ", "trứng ngỗng"),
+        )
+        assertFalse(
+            WordMatcher.isDuplicatePair("Sen đá", "con sen", "Sen đá", " con sen"),
+        )
+    }
 }

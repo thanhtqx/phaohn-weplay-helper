@@ -2,93 +2,427 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PhaoHN — Quản trị</title>
-  <link rel="stylesheet" href="/static/style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Pháo™ — Quản trị</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/static/style.css?v=38" />
 </head>
-<body class="admin-page">
-  <div class="admin-shell">
-    <aside class="admin-aside">
-      <a href="/" class="brand brand-light">
-        <span class="brand-mark">P</span>
+<body class="app-page admin-page phaohn-app">
+  <div class="sidebar-overlay hidden" id="sidebarOverlay" aria-hidden="true"></div>
+  <div class="admin-shell" id="adminShell">
+    <aside class="admin-aside" id="adminAside">
+      <div class="brand brand-light">
+        <span class="brand-mark brand-mark-phao" aria-hidden="true"><i class="bi bi-fire"></i></span>
         <span class="brand-text">
-          <strong>Quản trị</strong>
+          <strong class="brand-name">Pháo<sup class="brand-tm">™</sup> Admin</strong>
           <small id="adminUserLabel"></small>
         </span>
-      </a>
+      </div>
 
-      <nav class="admin-menu" id="adminNav">
-        <button type="button" class="admin-menu-item active" data-tab="users">Tài khoản</button>
+      <p class="admin-nav-label">Quản lý</p>
+      <nav class="admin-menu admin-menu-polish" id="adminNav">
+        <button type="button" class="admin-menu-item active" data-tab="words">
+          <i class="bi bi-journal-text admin-nav-icon"></i> Từ khóa
+          <span class="badge-dot hidden" id="wordsCountBadge">0</span>
+        </button>
+        <button type="button" class="admin-menu-item" data-tab="users">
+          <i class="bi bi-people admin-nav-icon"></i> Tài khoản
+        </button>
+        <button type="button" class="admin-menu-item" data-tab="notifications">
+          <i class="bi bi-megaphone admin-nav-icon"></i> Thông báo
+        </button>
+        <button type="button" class="admin-menu-item" data-tab="approvals">
+          <i class="bi bi-patch-check admin-nav-icon"></i> Duyệt từ
+          <span class="badge-dot hidden" id="approvalsPendingBadge">0</span>
+        </button>
         <button type="button" class="admin-menu-item" data-tab="reports">
-          Báo cáo
+          <i class="bi bi-flag admin-nav-icon"></i> Báo cáo
           <span class="badge-dot hidden" id="reportsPendingBadge">0</span>
         </button>
       </nav>
 
+      <p class="admin-nav-label">Khác</p>
+      <a href="/" class="admin-menu-item admin-menu-link admin-menu-link-user">
+        <i class="bi bi-house-door admin-nav-icon"></i> Trang người dùng
+      </a>
+
       <div class="admin-aside-foot">
-        <a href="/" class="admin-link-back">← Từ khóa</a>
-        <button type="button" class="btn btn-ghost-light" id="btnLogout">Thoát</button>
+        <button type="button" class="btn btn-ghost-light btn-block" id="btnLogout"><i class="bi bi-box-arrow-right"></i> Thoát</button>
       </div>
     </aside>
 
     <main class="admin-main">
-      <header class="admin-head">
-        <h1 id="adminPageTitle">Tài khoản</h1>
-        <p id="adminPageSub">Tạo tài khoản, đổi mật khẩu và cấp nguồn từ.</p>
+      <header class="app-topbar app-topbar-user admin-topbar">
+        <div class="app-topbar-left">
+          <div class="topbar-brand-chip topbar-brand-chip-admin">
+            <span class="brand-mark brand-mark-phao brand-mark-xs" aria-hidden="true"><i class="bi bi-fire"></i></span>
+            <span class="topbar-brand-name">Pháo<sup class="brand-tm">™</sup></span>
+          </div>
+          <div class="topbar-heading">
+            <h2 class="app-topbar-title" id="adminPageTitle">Từ khóa</h2>
+            <p class="app-topbar-sub" id="adminPageSub">Quản lý toàn bộ danh sách từ — thêm, sửa, nhập/xuất file.</p>
+          </div>
+        </div>
+        <div class="app-topbar-right">
+          <div class="bell-wrap" id="adminBellWrap">
+            <button type="button" class="icon-btn bell-btn" id="adminBtnBell" aria-label="Từ chờ duyệt" title="Từ chờ duyệt">
+              <i class="bi bi-bell"></i>
+              <span class="bell-badge hidden" id="adminBellBadge">0</span>
+            </button>
+            <div class="bell-dropdown hidden" id="adminBellDropdown">
+              <div class="bell-dropdown-head">
+                <strong>Chờ duyệt</strong>
+                <button type="button" class="bell-link" id="adminBellViewAll">Xem tất cả</button>
+              </div>
+              <div class="bell-dropdown-list" id="adminBellList"></div>
+            </div>
+          </div>
+          <div class="topbar-profile-wrap" id="adminTopbarProfileWrap">
+            <button type="button" class="topbar-profile-btn" id="adminBtnTopbarProfile" aria-haspopup="true" aria-expanded="false" title="Tài khoản">
+              <span class="topbar-profile-avatar" id="adminTopbarAvatar">A</span>
+              <span class="topbar-profile-name" id="adminTopbarUserName">Admin</span>
+              <i class="bi bi-chevron-down topbar-profile-caret" aria-hidden="true"></i>
+            </button>
+            <div class="profile-dropdown hidden" id="adminTopbarProfileDropdown">
+              <div class="profile-dropdown-head profile-dropdown-head-centered">
+                <span class="topbar-profile-avatar topbar-profile-avatar-lg" id="adminTopbarAvatarLg">A</span>
+                <span class="profile-dropdown-head-name" id="adminTopbarUserNameLg">Admin</span>
+                <span class="profile-dropdown-head-role" id="adminTopbarUserRoleLg">Quản trị viên</span>
+              </div>
+              <a href="/" class="profile-dropdown-item"><i class="bi bi-house"></i> Trang người dùng</a>
+              <div class="profile-dropdown-sep"></div>
+              <button type="button" class="profile-dropdown-item profile-dropdown-item-danger" id="adminTopbarBtnLogout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</button>
+            </div>
+          </div>
+        </div>
       </header>
 
-      <section class="admin-section" id="adminPanelUsers">
-        <div class="panel panel-flat">
-          <h3 class="panel-label">Tạo tài khoản</h3>
-          <form id="createUserForm" class="admin-form-grid">
-            <label class="field">
-              Tên đăng nhập
-              <input id="newUsername" minlength="3" maxlength="64" required />
-            </label>
-            <label class="field">
-              Mật khẩu
-              <input id="newPassword" type="password" minlength="6" required />
-            </label>
-            <label class="field">
-              Vai trò
-              <select id="newRole">
-                <option value="user">Người dùng</option>
-                <option value="admin">Admin</option>
-              </select>
-            </label>
-            <div class="admin-form-action">
-              <button type="submit" class="btn btn-primary">Tạo</button>
-            </div>
-          </form>
-          <p id="createUserError" class="alert alert-error hidden"></p>
+      <div class="admin-content">
+      <section class="admin-section" id="adminPanelWords">
+        <div id="adminPendingBanner" class="alert-banner hidden">
+          <i class="bi bi-hourglass-split"></i>
+          <span id="adminPendingBannerText">0 cặp từ user chờ duyệt</span>
+          <button type="button" class="alert-banner-btn" id="btnShowPending">Xem chờ duyệt</button>
         </div>
 
-        <div class="panel panel-flat">
-          <h3 class="panel-label">Danh sách</h3>
-          <div id="adminUsers" class="user-grid"></div>
+        <div class="panel panel-elevated panel-table-flex">
+          <div class="panel-toolbar panel-toolbar-admin panel-toolbar-search">
+            <div class="toolbar-search-block">
+              <label class="search-field search-field-prominent">
+                <span class="search-glyph" aria-hidden="true"><i class="bi bi-search"></i></span>
+                <input id="adminWordSearch" type="search" placeholder="Tìm từ, nguồn…" autocomplete="off" enterkeyhint="search" />
+                <button type="button" class="search-clear-btn hidden" id="adminSearchClear" aria-label="Xóa tìm kiếm"><i class="bi bi-x-lg"></i></button>
+              </label>
+            </div>
+            <div class="filter-chips" id="adminWordFilters">
+              <button type="button" class="filter-chip active" data-filter="all">Tất cả</button>
+              <button type="button" class="filter-chip filter-chip-warn" data-filter="pending">
+                <i class="bi bi-hourglass-split"></i> Chờ duyệt <span class="filter-chip-count hidden" id="pendingFilterCount">0</span>
+              </button>
+              <button type="button" class="filter-chip" data-filter="approved"><i class="bi bi-check-circle"></i> Đã duyệt</button>
+            </div>
+            <div class="panel-actions">
+              <button id="adminBtnAdd" class="btn btn-primary" type="button"><i class="bi bi-plus-lg"></i> Thêm</button>
+              <button id="adminBtnImport" class="btn btn-secondary" type="button"><i class="bi bi-upload"></i> Nhập file</button>
+              <button id="adminBtnExport" class="btn btn-secondary" type="button"><i class="bi bi-download"></i> Xuất CSV</button>
+            </div>
+            <input id="adminFileInput" type="file" accept=".csv,.xlsx,.xlsm,text/csv" hidden />
+          </div>
+          <div class="panel-stats-strip panel-stats-strip-compact" id="adminWordsStatsStrip">
+            <div class="panel-stat">
+              <span class="panel-stat-icon panel-stat-icon-primary"><i class="bi bi-funnel"></i></span>
+              <div class="panel-stat-body">
+                <span class="panel-stat-value" id="adminStatShowing">0</span>
+                <span class="panel-stat-label" id="adminStatShowingLabel">Đang hiển thị</span>
+              </div>
+            </div>
+            <div class="panel-stat">
+              <span class="panel-stat-icon"><i class="bi bi-collection"></i></span>
+              <div class="panel-stat-body">
+                <span class="panel-stat-value" id="adminStatTotal">0</span>
+                <span class="panel-stat-label">Tổng</span>
+              </div>
+            </div>
+            <div class="panel-stat panel-stat-warn" id="adminStatPendingWrap">
+              <span class="panel-stat-icon panel-stat-icon-warn"><i class="bi bi-hourglass-split"></i></span>
+              <div class="panel-stat-body">
+                <span class="panel-stat-value" id="adminStatPending">0</span>
+                <span class="panel-stat-label">Chờ duyệt</span>
+              </div>
+            </div>
+            <div class="panel-stat panel-stat-success">
+              <span class="panel-stat-icon panel-stat-icon-success"><i class="bi bi-check2-circle"></i></span>
+              <div class="panel-stat-body">
+                <span class="panel-stat-value" id="adminStatApproved">0</span>
+                <span class="panel-stat-label">Đã duyệt</span>
+              </div>
+            </div>
+          </div>
+          <div class="admin-bs-table-wrap js-fit-viewport">
+            <table class="admin-bs-table">
+              <thead>
+                <tr>
+                  <th scope="col" class="text-center th-stt">#</th>
+                  <th scope="col" class="th-civilian">Dân thường</th>
+                  <th scope="col" class="th-spy">Gián điệp</th>
+                  <th scope="col">Nguồn</th>
+                  <th scope="col">Trạng thái</th>
+                  <th scope="col" class="text-center" style="width:7.5rem">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="adminWords"></tbody>
+            </table>
+          </div>
+          <div id="adminWordsEmpty" class="empty-state hidden">
+            <div class="empty-icon"><i class="bi bi-journal-x"></i></div>
+            <p class="empty-title">Chưa có từ khóa</p>
+            <p class="empty-desc">Thêm thủ công hoặc nhập file Excel/CSV.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="admin-section hidden" id="adminPanelUsers">
+        <details class="panel panel-elevated panel-compact users-create-panel" open>
+          <summary class="users-create-summary">
+            <div class="users-create-summary-text">
+              <h3 class="panel-section-title"><i class="bi bi-person-plus"></i> Tạo tài khoản mới</h3>
+              <p class="panel-section-desc">Thêm user hoặc admin — mật khẩu tối thiểu 6 ký tự</p>
+            </div>
+            <i class="bi bi-chevron-down users-create-caret" aria-hidden="true"></i>
+          </summary>
+          <div class="users-create-body">
+            <form id="createUserForm" class="admin-form-grid users-create-form">
+              <label class="field">
+                <span><i class="bi bi-person"></i> Tên đăng nhập</span>
+                <input id="newUsername" minlength="3" maxlength="64" required placeholder="vd: thanh" />
+              </label>
+              <label class="field">
+                <span><i class="bi bi-key"></i> Mật khẩu</span>
+                <input id="newPassword" type="password" minlength="6" required placeholder="••••••" />
+              </label>
+              <label class="field">
+                <span><i class="bi bi-shield"></i> Vai trò</span>
+                <select id="newRole">
+                  <option value="user">Người dùng</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </label>
+              <div class="admin-form-action">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Tạo tài khoản</button>
+              </div>
+            </form>
+            <p id="createUserError" class="alert alert-error hidden"></p>
+          </div>
+        </details>
+
+        <div class="panel panel-elevated panel-table-flex">
+          <div class="panel-stats-strip panel-stats-strip-compact" id="usersStatsStrip">
+            <div class="panel-stat">
+              <div class="panel-stat-body">
+                <span class="panel-stat-value" id="statUsersTotal">0</span>
+                <span class="panel-stat-label">Tổng</span>
+              </div>
+            </div>
+            <div class="panel-stat panel-stat-info">
+              <div class="panel-stat-body">
+                <span class="panel-stat-value" id="statUsersAdmin">0</span>
+                <span class="panel-stat-label">Admin</span>
+              </div>
+            </div>
+            <div class="panel-stat panel-stat-success">
+              <div class="panel-stat-body">
+                <span class="panel-stat-value" id="statUsersActive">0</span>
+                <span class="panel-stat-label">Hoạt động</span>
+              </div>
+            </div>
+            <div class="panel-stat panel-stat-warn hidden" id="statUsersLockedWrap">
+              <div class="panel-stat-body">
+                <span class="panel-stat-value" id="statUsersLocked">0</span>
+                <span class="panel-stat-label">Đã khóa</span>
+              </div>
+            </div>
+          </div>
+          <div class="panel-section-head panel-section-head-toolbar">
+            <div>
+              <h3 class="panel-section-title"><i class="bi bi-people"></i> Danh sách tài khoản</h3>
+              <p class="panel-section-desc" id="usersListDesc">0 tài khoản</p>
+            </div>
+            <label class="search-field search-field-compact users-search-field">
+              <span class="search-glyph" aria-hidden="true"><i class="bi bi-search"></i></span>
+              <input id="adminUserSearch" type="search" placeholder="Tìm tên…" autocomplete="off" />
+            </label>
+          </div>
+          <div class="admin-bs-table-wrap js-fit-viewport">
+            <table class="admin-bs-table">
+              <thead>
+                <tr>
+                  <th scope="col" class="text-center" style="width:3rem">#</th>
+                  <th scope="col">Tài khoản</th>
+                  <th scope="col">Vai trò</th>
+                  <th scope="col">Trạng thái</th>
+                  <th scope="col">Tạo bởi</th>
+                  <th scope="col" class="text-center" style="width:11rem">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="adminUsers"></tbody>
+            </table>
+          </div>
+          <div id="adminUsersEmpty" class="empty-state hidden">
+            <div class="empty-icon"><i class="bi bi-person-x"></i></div>
+            <p class="empty-title">Không có tài khoản</p>
+            <p class="empty-desc">Tạo tài khoản mới ở form phía trên.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="admin-section admin-notif-section hidden" id="adminPanelNotifications">
+        <div class="admin-notif-layout">
+          <div class="panel panel-elevated admin-notif-compose">
+            <div class="admin-notif-compose-head">
+              <span class="admin-notif-compose-icon" aria-hidden="true"><i class="bi bi-megaphone"></i></span>
+              <div>
+                <h3 class="panel-section-title">Gửi thông báo</h3>
+                <p class="panel-section-desc">Hiển thị trong app và tab Thông báo của người dùng</p>
+              </div>
+            </div>
+            <form id="sendNotificationForm" class="admin-notif-form">
+              <label class="field">
+                <span>Tiêu đề</span>
+                <input id="notifTitle" maxlength="200" required placeholder="VD: Cập nhật phiên bản mới" />
+              </label>
+              <label class="field">
+                <span>Nội dung</span>
+                <textarea id="notifBody" rows="5" maxlength="2000" required placeholder="Viết nội dung thông báo…"></textarea>
+              </label>
+              <label class="field">
+                <span>Gửi tới</span>
+                <select id="notifTarget">
+                  <option value="">Tất cả người dùng</option>
+                </select>
+              </label>
+              <div class="admin-notif-form-actions">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Gửi thông báo</button>
+              </div>
+            </form>
+            <p id="sendNotificationError" class="alert alert-error hidden"></p>
+            <p id="sendNotificationOk" class="alert alert-success hidden"></p>
+          </div>
+
+          <div class="panel panel-elevated admin-notif-history">
+            <div class="admin-notif-history-head">
+              <div>
+                <h3 class="panel-section-title">Đã gửi</h3>
+                <p class="panel-section-desc">Lịch sử thông báo đã phát</p>
+              </div>
+              <span class="admin-notif-count" id="adminNotifCount">0</span>
+            </div>
+            <div id="adminNotificationsList" class="admin-notif-list js-fit-viewport"></div>
+            <div id="adminNotificationsEmpty" class="empty-state hidden">
+              <div class="empty-icon"><i class="bi bi-megaphone"></i></div>
+              <p class="empty-title">Chưa gửi thông báo</p>
+              <p class="empty-desc">Tin gửi đi sẽ hiển thị tại đây.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="admin-section hidden" id="adminPanelApprovals">
+        <div class="panel panel-elevated panel-table-flex">
+          <div class="panel-section-head panel-section-head-compact">
+            <h3 class="panel-section-title">Từ chờ duyệt</h3>
+            <p class="panel-section-desc">Từ user thêm hoặc nhập file — duyệt xong mới dùng tra cứu và đồng bộ.</p>
+          </div>
+          <div class="admin-bs-table-wrap js-fit-viewport">
+            <table class="admin-bs-table">
+              <thead>
+                <tr>
+                  <th scope="col" class="text-center" style="width:3rem">#</th>
+                  <th scope="col">Từ khóa</th>
+                  <th scope="col">Người gửi</th>
+                  <th scope="col">Thời gian</th>
+                  <th scope="col" class="text-center" style="width:7.5rem">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="adminApprovals"></tbody>
+            </table>
+          </div>
+          <div id="adminApprovalsEmpty" class="empty-state hidden">
+            <div class="empty-icon"><i class="bi bi-check-circle"></i></div>
+            <p class="empty-title">Không có từ chờ duyệt</p>
+            <p class="empty-desc">Mọi từ user gửi đã được xử lý.</p>
+          </div>
         </div>
       </section>
 
       <section class="admin-section hidden" id="adminPanelReports">
-        <div class="panel panel-flat">
-          <h3 class="panel-label">Báo cáo từ khóa</h3>
-          <div class="table-wrap table-wrap-admin">
-            <table class="data-table data-table-admin">
+        <div class="panel panel-elevated panel-table-flex">
+          <div class="panel-section-head panel-section-head-compact">
+            <h3 class="panel-section-title">Báo cáo từ khóa</h3>
+          </div>
+          <div class="admin-bs-table-wrap js-fit-viewport">
+            <table class="admin-bs-table">
               <thead>
                 <tr>
-                  <th>Từ khóa</th>
-                  <th>Loại</th>
-                  <th>Người báo</th>
-                  <th>Trạng thái</th>
-                  <th class="th-actions">Thao tác</th>
+                  <th scope="col" class="text-center" style="width:3rem">#</th>
+                  <th scope="col">Từ khóa</th>
+                  <th scope="col">Loại</th>
+                  <th scope="col">Người báo</th>
+                  <th scope="col">Trạng thái</th>
+                  <th scope="col" class="text-center" style="width:7.5rem">Thao tác</th>
                 </tr>
               </thead>
               <tbody id="adminReports"></tbody>
             </table>
           </div>
-          <p id="adminReportsEmpty" class="text-muted hidden">Chưa có báo cáo.</p>
+          <div id="adminReportsEmpty" class="empty-state hidden">
+            <div class="empty-icon"><i class="bi bi-flag"></i></div>
+            <p class="empty-title">Chưa có báo cáo</p>
+            <p class="empty-desc">Báo cáo từ user sẽ hiện tại đây.</p>
+          </div>
         </div>
       </section>
+      </div>
+
+      <nav class="mobile-bottom-nav mobile-bottom-nav-admin mobile-bottom-nav-polish" id="adminMobileBottomNav" aria-label="Menu quản trị">
+        <a href="/" class="mobile-bottom-nav-item mobile-bottom-nav-link" title="Trang người dùng">
+          <span class="bnav-icon"><i class="bi bi-house-door"></i></span>
+          <span class="bnav-label">Web</span>
+        </a>
+        <button type="button" class="mobile-bottom-nav-item active" data-tab="words">
+          <span class="bnav-icon"><i class="bi bi-journal-text"></i></span>
+          <span class="bnav-label">Từ</span>
+        </button>
+        <button type="button" class="mobile-bottom-nav-item" data-tab="users">
+          <span class="bnav-icon"><i class="bi bi-people"></i></span>
+          <span class="bnav-label">TK</span>
+        </button>
+        <button type="button" class="mobile-bottom-nav-item" data-tab="approvals">
+          <span class="bnav-icon">
+            <i class="bi bi-patch-check"></i>
+            <span class="bnav-badge hidden" id="mobileAdminPendingBadge">0</span>
+          </span>
+          <span class="bnav-label">Duyệt</span>
+        </button>
+        <button type="button" class="mobile-bottom-nav-item" data-tab="more" id="adminNavMore" aria-haspopup="true">
+          <span class="bnav-icon"><i class="bi bi-grid"></i></span>
+          <span class="bnav-label">Thêm</span>
+        </button>
+      </nav>
+      <div class="admin-mobile-more hidden" id="adminMobileMore">
+        <button type="button" class="admin-mobile-more-item" data-tab="notifications">
+          <i class="bi bi-megaphone"></i> Thông báo
+        </button>
+        <button type="button" class="admin-mobile-more-item" data-tab="reports">
+          <i class="bi bi-flag"></i> Báo cáo
+        </button>
+        <a href="/download/apk" class="admin-mobile-more-item admin-mobile-more-dl" download>
+          <i class="bi bi-download"></i> Tải app
+        </a>
+      </div>
     </main>
   </div>
 
@@ -105,6 +439,49 @@
     </div>
   </dialog>
 
-  <script src="/static/admin.js"></script>
+  <dialog id="adminWordDialog" class="modal">
+    <form id="adminWordForm" method="dialog" class="modal-body">
+      <h2 class="modal-title" id="adminWordDialogTitle">Thêm cặp từ</h2>
+      <div id="adminModeTabs" class="seg-tabs">
+        <button type="button" class="seg-tab active" data-mode="single">Một cặp</button>
+        <button type="button" class="seg-tab" data-mode="multi">Nhiều cặp</button>
+      </div>
+      <div id="adminSingleFields" class="field-stack">
+        <label class="field">
+          <span class="label-civilian">Dân thường</span>
+          <input id="adminCivilian" maxlength="200" />
+        </label>
+        <label class="field">
+          <span class="label-spy">Gián điệp</span>
+          <input id="adminSpy" maxlength="200" />
+        </label>
+      </div>
+      <div id="adminMultiFields" class="field-stack hidden">
+        <label class="field">
+          Mỗi dòng một cặp: <span class="text-muted">Dân,Gián</span>
+          <textarea id="adminMultiLines" rows="8" placeholder="Bánh mì,Phở&#10;Cà phê,Trà"></textarea>
+        </label>
+      </div>
+      <p id="adminWordError" class="alert alert-error hidden"></p>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" id="adminWordCancel">Hủy</button>
+        <button type="submit" class="btn btn-primary">Lưu</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="adminResultDialog" class="modal">
+    <div class="modal-body">
+      <h2 class="modal-title">Kết quả nhập</h2>
+      <pre id="adminResultText" class="result-pre"></pre>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-primary" id="adminResultOk">Đóng</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/layout.js?v=33"></script>
+  <script src="/static/admin.js?v=33"></script>
 </body>
 </html>

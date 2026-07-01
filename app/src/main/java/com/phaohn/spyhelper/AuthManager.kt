@@ -31,7 +31,14 @@ class AuthManager(private val context: Context) {
         return AuthUser(id, name, role)
     }
 
-    fun isAdmin(): Boolean = getUser()?.role == ROLE_ADMIN
+    fun isStaff(): Boolean {
+        val role = getUser()?.role ?: return false
+        return role == ROLE_ADMIN || role == ROLE_SUPERADMIN
+    }
+
+    fun isAdmin(): Boolean = isStaff()
+
+    fun isSuperAdmin(): Boolean = getUser()?.role == ROLE_SUPERADMIN
 
     fun saveSession(token: String, user: AuthUser) {
         prefs.edit()
@@ -49,6 +56,17 @@ class AuthManager(private val context: Context) {
             .remove(KEY_USERNAME)
             .remove(KEY_ROLE)
             .apply()
+    }
+
+    suspend fun verifySession() = withContext(Dispatchers.IO) {
+        val token = getToken()
+        if (token.isEmpty()) throw AuthException("unauthorized")
+        request(
+            "${SpyPrefs.syncBaseUrl(context)}/api/auth/me",
+            "GET",
+            null,
+            token,
+        )
     }
 
     suspend fun login(username: String, password: String): AuthUser = withContext(Dispatchers.IO) {
@@ -154,6 +172,7 @@ class AuthManager(private val context: Context) {
             val stream = if (code in 200..299) conn.inputStream else conn.errorStream
             val text = stream?.bufferedReader(Charsets.UTF_8)?.use(BufferedReader::readText).orEmpty()
             if (code !in 200..299) {
+                ApiError.accountLockedMessage(code, text)?.let { throw AccountLockedException(it) }
                 throw AuthException(parseError(text, code))
             }
             return text
@@ -180,6 +199,7 @@ class AuthManager(private val context: Context) {
         private const val KEY_USER_ID = "user_id"
         private const val KEY_USERNAME = "username"
         private const val KEY_ROLE = "role"
+        const val ROLE_SUPERADMIN = "superadmin"
         const val ROLE_ADMIN = "admin"
         const val ROLE_USER = "user"
     }

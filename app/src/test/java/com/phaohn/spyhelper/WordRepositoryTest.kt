@@ -75,7 +75,7 @@ class WordRepositoryTest {
     @Test
     fun lookupMyTamReturnsAllSpyPairs() = runBlocking {
         val spies = listOf("1", "2", "3", "4", "5", "66", "6")
-        repository.importPairs(spies.map { "Mỹ Tâm" to it })
+        spies.forEach { spy -> repository.savePair("Mỹ Tâm", spy) }
 
         val result = repository.lookupOthers("Mỹ Tâm")
         assertTrue(result is LookupResult.Found)

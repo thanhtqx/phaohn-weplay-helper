@@ -14,8 +14,10 @@ object WordMatcher {
         civilian: String,
         spy: String,
     ): Boolean {
-        val sameOrder = matches(existingCivilian, civilian) && matches(existingSpy, spy)
-        val swappedOrder = matches(existingCivilian, spy) && matches(existingSpy, civilian)
+        val sameOrder =
+            matches(existingCivilian, civilian) && matches(existingSpy, spy)
+        val swappedOrder =
+            matches(existingCivilian, spy) && matches(existingSpy, civilian)
         return sameOrder || swappedOrder
     }
 }

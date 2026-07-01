@@ -1,9 +1,11 @@
 package com.phaohn.spyhelper
 
 import android.content.Context
+import android.graphics.Typeface
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
 import androidx.core.content.ContextCompat
 
 object RoleTextFormatter {
@@ -14,9 +16,20 @@ object RoleTextFormatter {
     }
 
     fun bubbleColorForRole(role: WordRole): Int = when (role) {
-        WordRole.CIVILIAN -> 0xFF90CAF9.toInt()
-        WordRole.SPY -> 0xFFFFCC80.toInt()
+        WordRole.CIVILIAN -> 0xFF64B5F6.toInt()
+        WordRole.SPY -> 0xFFFFB74D.toInt()
     }
+
+    fun coloredWordApp(context: Context, word: String, role: WordRole): CharSequence =
+        SpannableStringBuilder(word).apply {
+            setSpan(
+                ForegroundColorSpan(colorForRole(context, role)),
+                0,
+                length,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+            )
+            setSpan(StyleSpan(Typeface.BOLD), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
 
     fun coloredWord(context: Context, word: String, role: WordRole): CharSequence {
         return SpannableStringBuilder(word).apply {
@@ -37,6 +50,7 @@ object RoleTextFormatter {
                 length,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
             )
+            setSpan(StyleSpan(Typeface.BOLD), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
     }
 
@@ -45,7 +59,6 @@ object RoleTextFormatter {
         val sb = SpannableStringBuilder()
         others.forEachIndexed { index, entry ->
             if (index > 0) sb.append("\n")
-            sb.append("  ◦  ")
             val wordStart = sb.length
             sb.append(entry.word)
             sb.setSpan(
@@ -63,14 +76,6 @@ object RoleTextFormatter {
         val sb = SpannableStringBuilder()
         others.forEachIndexed { index, entry ->
             if (index > 0) sb.append("\n")
-            val bulletStart = sb.length
-            sb.append("• ")
-            sb.setSpan(
-                ForegroundColorSpan(ContextCompat.getColor(context, R.color.text_secondary)),
-                bulletStart,
-                sb.length,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-            )
             val wordStart = sb.length
             sb.append(entry.word)
             sb.setSpan(

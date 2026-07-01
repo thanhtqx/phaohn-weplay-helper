@@ -24,12 +24,25 @@ class HomeFragment : Fragment() {
         ActivityResultContracts.StartActivityForResult()
     ) { refreshDashboard() }
 
+    private val accessibilityLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { refreshDashboard() }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         repository = PhaoHNApp.repo(requireActivity().application)
 
         binding.rowAccessibility.setOnClickListener {
-            AccessibilitySetupHelper.openAccessibilityFlow(this)
+            val ctx = requireContext()
+            if (SpyAccessibilityService.isEnabled(ctx)) {
+                OemSettingsNavigator.openAccessibilitySettings(ctx)
+            } else if (BuildConfig.A11Y_DIRECT) {
+                AccessibilitySetupHelper.openAccessibilityServiceDetails(ctx)
+            } else {
+                accessibilityLauncher.launch(
+                    Intent(ctx, AccessibilityOnboardingActivity::class.java),
+                )
+            }
         }
         binding.rowOverlay.setOnClickListener {
             if (!Settings.canDrawOverlays(requireContext())) {
@@ -43,6 +56,11 @@ class HomeFragment : Fragment() {
         }
         binding.rowNotification.setOnClickListener {
             (activity as? MainActivity)?.requestNotificationPermission()
+        }
+        binding.readyChip.setOnClickListener {
+            if (!PermissionHelper.check(requireContext()).allGranted) {
+                (activity as? MainActivity)?.showPermissionsSetup()
+            }
         }
         return binding.root
     }

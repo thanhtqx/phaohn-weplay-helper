@@ -2,10 +2,7 @@ package com.phaohn.spyhelper
 
 import android.os.Bundle
 import android.text.Editable
-import android.text.SpannableStringBuilder
-import android.text.Spanned
 import android.text.TextWatcher
-import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -84,6 +81,7 @@ class LookupFragment : Fragment() {
     }
 
     private suspend fun performLookup(query: String, recordHistory: Boolean) {
+        showSearching(query)
         when (val result = repository.lookupOthers(query)) {
             is LookupResult.Found -> {
                 showResult(result.myWord, result.myRole, result.otherWords)
@@ -106,28 +104,53 @@ class LookupFragment : Fragment() {
         binding.lookupEmpty.isVisible = false
     }
 
+    private fun showSearching(query: String) {
+        val ctx = requireContext()
+        WordLookupUi.bindMyWord(
+            binding.lookupMyWord,
+            query.ifBlank { getString(R.string.word_placeholder) },
+            ctx,
+        )
+        WordLookupUi.bindSearchWords(
+            binding.lookupResultsScroll,
+            binding.lookupResults,
+            getString(R.string.word_searching),
+            ctx,
+        )
+        binding.resultCard.isVisible = true
+        binding.lookupEmpty.isVisible = false
+    }
+
     private fun showResult(myWord: String, myRole: WordRole, others: List<LabeledWord>) {
         val ctx = requireContext()
-        binding.lookupMyWord.text = SpannableStringBuilder().apply {
-            append(getString(R.string.my_word))
-            append(": ")
-            val start = length
-            append(myWord)
-            setSpan(
-                ForegroundColorSpan(RoleTextFormatter.colorForRole(ctx, myRole)),
-                start,
-                length,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-            )
-        }
-        binding.lookupResults.text = RoleTextFormatter.formatOthersApp(ctx, others)
+        WordLookupUi.bindMyWord(
+            binding.lookupMyWord,
+            RoleTextFormatter.coloredWordApp(ctx, myWord, myRole),
+            ctx,
+        )
+        WordLookupUi.bindSearchWords(
+            binding.lookupResultsScroll,
+            binding.lookupResults,
+            if (others.isEmpty()) {
+                getString(R.string.word_placeholder)
+            } else {
+                RoleTextFormatter.formatOthersApp(ctx, others)
+            },
+            ctx,
+        )
         binding.resultCard.isVisible = true
         binding.lookupEmpty.isVisible = false
     }
 
     private fun showNotFound(myWord: String) {
-        binding.lookupMyWord.text = getString(R.string.lookup_my_word, myWord)
-        binding.lookupResults.text = getString(R.string.not_in_db)
+        val ctx = requireContext()
+        WordLookupUi.bindMyWord(binding.lookupMyWord, myWord, ctx)
+        WordLookupUi.bindSearchWords(
+            binding.lookupResultsScroll,
+            binding.lookupResults,
+            getString(R.string.word_not_in_list),
+            ctx,
+        )
         binding.resultCard.isVisible = true
         binding.lookupEmpty.isVisible = false
     }

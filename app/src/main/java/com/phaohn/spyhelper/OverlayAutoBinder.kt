@@ -5,7 +5,6 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
 
 class OverlayAutoBinder(
     private val menuRoot: View,
@@ -14,13 +13,11 @@ class OverlayAutoBinder(
 ) {
     private val readyToggle: TextView = menuRoot.findViewById(R.id.overlayAutoReady)
     private val sitToggle: TextView = menuRoot.findViewById(R.id.overlayAutoSit)
-    private val voteToggle: TextView = menuRoot.findViewById(R.id.overlayAutoVote)
-    private val votePanel: View = menuRoot.findViewById(R.id.overlayVotePanel)
+    private val lockToggle: TextView = menuRoot.findViewById(R.id.overlayVoteLock)
     private val seatRow1: LinearLayout = menuRoot.findViewById(R.id.overlaySeatRow1)
     private val seatRow2: LinearLayout = menuRoot.findViewById(R.id.overlaySeatRow2)
     private val secRow1: LinearLayout = menuRoot.findViewById(R.id.overlaySecRow1)
     private val secRow2: LinearLayout = menuRoot.findViewById(R.id.overlaySecRow2)
-
     private val seatChips = mutableListOf<TextView>()
     private val secChips = mutableListOf<TextView>()
     private var suppressSeat = false
@@ -31,57 +28,90 @@ class OverlayAutoBinder(
             buildSeatChips()
             buildSecChips()
         }
-        wireToggle(readyToggle) { checked ->
+        wireOverlayToggle(readyToggle) { checked ->
             SpyPrefs.setAutoReadyEnabled(context, checked)
             AutoPrefsNotifier.notifyChanged(context)
         }
-        wireToggle(sitToggle) { checked ->
+        wireOverlayToggle(sitToggle) { checked ->
             SpyPrefs.setAutoSitEnabled(context, checked)
             AutoPrefsNotifier.notifyChanged(context)
         }
-        wireToggle(voteToggle) { checked ->
-            if (checked && !SpyPrefs.isVoteSeatChosen(context)) {
-                val seat = SpyPrefs.voteTargetSeat(context)
-                SpyPrefs.setVoteTargetSeat(context, seat)
-                SpyPrefs.setVoteSeatChosen(context, true)
-                styleSeatChips(seat)
-            }
-            SpyPrefs.setAutoVoteEnabled(context, checked)
-            refreshVotePanel(forceLayout = true)
-            AutoPrefsNotifier.notifyChanged(context)
+        lockToggle.setOnClickListener {
+            AutoToggleUi.pulse(lockToggle)
+            onVoteLockChanged(!SpyPrefs.isVoteSettingsLocked(context))
         }
         refreshFromPrefs()
     }
 
     fun refreshFromPrefs() {
-        styleToggle(readyToggle, SpyPrefs.isAutoReadyEnabled(context))
-        styleToggle(sitToggle, SpyPrefs.isAutoSitEnabled(context))
-        val chosen = SpyPrefs.isVoteSeatChosen(context)
-        var voteOn = SpyPrefs.isAutoVoteEnabled(context)
-        if (voteOn && !chosen) {
-            SpyPrefs.setAutoVoteEnabled(context, false)
-            voteOn = false
+        styleOverlayToggle(readyToggle, SpyPrefs.isAutoReadyEnabled(context))
+        styleOverlayToggle(sitToggle, SpyPrefs.isAutoSitEnabled(context))
+        val locked = SpyPrefs.isVoteSettingsLocked(context)
+        if (locked != SpyPrefs.isAutoVoteEnabled(context)) {
+            SpyPrefs.setAutoVoteEnabled(context, locked)
         }
-        styleToggle(voteToggle, voteOn)
-        if (chosen) {
-            styleSeatChips(SpyPrefs.voteTargetSeat(context))
-        } else {
-            seatChips.forEach { it.isSelected = false }
-        }
+        styleLockButton(locked)
+        styleSeatChips(SpyPrefs.voteTargetSeat(context))
         styleSecChips(SpyPrefs.voteTapAtSeconds(context))
-        refreshVotePanel()
+        applyVoteSettingsLock(locked)
     }
 
-    private fun wireToggle(view: TextView, onChanged: (Boolean) -> Unit) {
+    private fun onVoteLockChanged(locked: Boolean) {
+        if (locked) {
+            SpyPrefs.ensureDefaultVoteSeat(context)
+            SpyPrefs.setVoteSeatChosen(context, true)
+        }
+        SpyPrefs.setVoteLockWithAutoVote(context, locked)
+        styleLockButton(locked)
+        applyVoteSettingsLock(locked)
+        AutoPrefsNotifier.notifyChanged(context)
+        onLayoutChanged()
+    }
+
+    private fun applyVoteSettingsLock(locked: Boolean) {
+        val pickerAlpha = if (locked) AutoToggleUi.LOCKED_PICKER_ALPHA else 1f
+        seatRow1.alpha = pickerAlpha
+        seatRow2.alpha = pickerAlpha
+        secRow1.alpha = pickerAlpha
+        secRow2.alpha = pickerAlpha
+        seatChips.forEach { chip ->
+            chip.isEnabled = !locked
+            chip.isClickable = !locked
+            chip.alpha = pickerAlpha
+        }
+        secChips.forEach { chip ->
+            chip.isEnabled = !locked
+            chip.isClickable = !locked
+            chip.alpha = pickerAlpha
+        }
+    }
+
+    private fun styleLockButton(locked: Boolean) {
+        lockToggle.isSelected = locked
+        lockToggle.text = context.getString(
+            if (locked) R.string.auto_vote_lock_action_unlock else R.string.auto_vote_lock_action_lock,
+        )
+        lockToggle.setTextColor(
+            ContextCompat.getColor(
+                context,
+                if (locked) R.color.overlay_text_primary else R.color.overlay_text_muted,
+            ),
+        )
+        lockToggle.refreshDrawableState()
+    }
+
+    private fun wireOverlayToggle(view: TextView, onChanged: (Boolean) -> Unit) {
         view.setOnClickListener {
+            if (!view.isEnabled) return@setOnClickListener
+            AutoToggleUi.pulse(view)
             val next = !view.isSelected
-            styleToggle(view, next)
+            styleOverlayToggle(view, next)
             onChanged(next)
             onLayoutChanged()
         }
     }
 
-    private fun styleToggle(view: TextView, on: Boolean) {
+    private fun styleOverlayToggle(view: TextView, on: Boolean) {
         view.isSelected = on
         view.setTextColor(
             ContextCompat.getColor(
@@ -90,22 +120,6 @@ class OverlayAutoBinder(
             ),
         )
         view.refreshDrawableState()
-    }
-
-    private fun refreshVotePanel(forceLayout: Boolean = false) {
-        val show = SpyPrefs.isAutoVoteEnabled(context)
-        when {
-            show != votePanel.isVisible -> {
-                votePanel.isVisible = show
-                onLayoutChanged()
-            }
-            forceLayout -> onLayoutChanged()
-        }
-        (seatChips + secChips).forEach { chip ->
-            chip.isEnabled = true
-            chip.isClickable = true
-            chip.alpha = 1f
-        }
     }
 
     private fun buildSeatChips() {
@@ -117,7 +131,8 @@ class OverlayAutoBinder(
             seatChips += chip
             if (seat <= 4) seatRow1.addView(chip) else seatRow2.addView(chip)
             chip.setOnClickListener {
-                if (suppressSeat) return@setOnClickListener
+                if (suppressSeat || SpyPrefs.isVoteSettingsLocked(context)) return@setOnClickListener
+                AutoToggleUi.pulse(chip)
                 SpyPrefs.setVoteTargetSeat(context, seat)
                 SpyPrefs.setVoteSeatChosen(context, true)
                 styleSeatChips(seat)
@@ -136,7 +151,8 @@ class OverlayAutoBinder(
             secChips += chip
             if (sec <= 5) secRow1.addView(chip) else secRow2.addView(chip)
             chip.setOnClickListener {
-                if (suppressSec) return@setOnClickListener
+                if (suppressSec || SpyPrefs.isVoteSettingsLocked(context)) return@setOnClickListener
+                AutoToggleUi.pulse(chip)
                 SpyPrefs.setVoteTapAtSeconds(context, sec)
                 styleSecChips(sec)
                 AutoPrefsNotifier.notifyChanged(context)
@@ -147,15 +163,16 @@ class OverlayAutoBinder(
 
     private fun createChip(label: String): TextView {
         val density = context.resources.displayMetrics.density
-        val padH = (density * 4f).toInt()
-        val padV = (density * 7f).toInt()
-        val minH = (density * 32f).toInt()
+        val padH = (density * 2f).toInt().coerceAtLeast(2)
+        val padV = (density * 4f).toInt().coerceAtLeast(4)
+        val minH = context.resources.getDimensionPixelSize(R.dimen.overlay_chip_min_h)
+        val margin = (density * 2.5f).toInt()
         val lp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-            marginEnd = (density * 3f).toInt()
+            marginEnd = margin
         }
         return TextView(context).apply {
             text = label
-            textSize = 11f
+            textSize = 10f
             gravity = android.view.Gravity.CENTER
             minHeight = minH
             setPadding(padH, padV, padH, padV)

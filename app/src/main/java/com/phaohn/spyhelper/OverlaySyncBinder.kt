@@ -56,12 +56,17 @@ class OverlaySyncBinder(
         syncIcon.alpha = 0.45f
         scope.launch {
             try {
+                val baseUrl = SpyPrefs.syncBaseUrl(context)
+                val token = auth.getToken()
                 withContext(Dispatchers.IO) {
                     repository.syncWithServer(
-                        SpyPrefs.syncBaseUrl(context),
-                        auth.getToken(),
+                        baseUrl,
+                        token,
+                        context,
+                        isAdmin = auth.isAdmin(),
                     )
                 }
+                AdminNotificationHelper.pullAfterServerTouch(context, baseUrl, token)
                 context.sendBroadcast(
                     Intent(SpyAccessibilityService.ACTION_PAIRS_UPDATED)
                         .setPackage(context.packageName),

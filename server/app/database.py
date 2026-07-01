@@ -17,7 +17,7 @@ def _migrate_word_pairs(conn: sqlite3.Connection) -> None:
     if "user_id" not in cols:
         conn.execute("ALTER TABLE word_pairs ADD COLUMN user_id INTEGER")
         admin = conn.execute(
-            "SELECT id FROM users WHERE role = 'admin' ORDER BY id LIMIT 1"
+            "SELECT id FROM users WHERE role IN ('admin', 'superadmin') ORDER BY id LIMIT 1"
         ).fetchone()
         admin_id = admin["id"] if admin else 1
         conn.execute(
@@ -97,6 +97,32 @@ def init_db() -> None:
         )
         conn.execute(
             """
+            CREATE TABLE IF NOT EXISTS admin_notifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                body TEXT NOT NULL,
+                target_user_id INTEGER,
+                created_at INTEGER NOT NULL,
+                created_by INTEGER NOT NULL,
+                FOREIGN KEY (target_user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (created_by) REFERENCES users(id)
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS notification_reads (
+                notification_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                read_at INTEGER NOT NULL,
+                PRIMARY KEY (notification_id, user_id),
+                FOREIGN KEY (notification_id) REFERENCES admin_notifications(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+            """
+        )
+        conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS word_reports (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 pair_id INTEGER NOT NULL,
@@ -113,4 +139,88 @@ def init_db() -> None:
             """
         )
         _migrate_word_pairs(conn)
+        _migrate_user_lock(conn)
+        _migrate_user_nickname(conn)
+        _migrate_pair_approval(conn)
+        _migrate_pair_user_hidden(conn)
+        _migrate_dedupe_pairs(conn)
+        _migrate_superadmin_role(conn)
+        _migrate_pair_tombstones(conn)
         conn.commit()
+
+
+def _migrate_pair_tombstones(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS pair_tombstones (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            civilian_word TEXT NOT NULL,
+            spy_word TEXT NOT NULL,
+            deleted_at INTEGER NOT NULL,
+            deleted_by INTEGER,
+            FOREIGN KEY (deleted_by) REFERENCES users(id)
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_tombstone_pair
+        ON pair_tombstones(civilian_word, spy_word)
+        """
+    )
+
+
+def _migrate_superadmin_role(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        "UPDATE users SET role = ? WHERE role = ?",
+        ("superadmin", "admin"),
+    )
+
+
+def _migrate_dedupe_pairs(conn: sqlite3.Connection) -> None:
+    from .repository import APPROVAL_APPROVED, APPROVAL_PENDING, dedupe_word_pairs
+
+    conn.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_user_pair_exact
+        ON word_pairs(user_id, civilian_word, spy_word)
+        """
+    )
+    dedupe_word_pairs(conn)
+
+
+def _migrate_pair_approval(conn: sqlite3.Connection) -> None:
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(word_pairs)").fetchall()}
+    if "approval_status" not in cols:
+        conn.execute(
+            """
+            ALTER TABLE word_pairs
+            ADD COLUMN approval_status TEXT NOT NULL DEFAULT 'approved'
+            """
+        )
+
+
+def _migrate_user_nickname(conn: sqlite3.Connection) -> None:
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
+    if "nickname" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN nickname TEXT")
+
+
+def _migrate_pair_user_hidden(conn: sqlite3.Connection) -> None:
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(word_pairs)").fetchall()}
+    if "user_hidden_at" not in cols:
+        conn.execute("ALTER TABLE word_pairs ADD COLUMN user_hidden_at INTEGER")
+
+
+def _migrate_user_lock(conn: sqlite3.Connection) -> None:
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
+    if "is_locked" not in cols:
+        conn.execute(
+            "ALTER TABLE users ADD COLUMN is_locked INTEGER NOT NULL DEFAULT 0"
+        )
+    if "lock_reason" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN lock_reason TEXT")
+    if "locked_at" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN locked_at INTEGER")
+    if "locked_by" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN locked_by INTEGER")

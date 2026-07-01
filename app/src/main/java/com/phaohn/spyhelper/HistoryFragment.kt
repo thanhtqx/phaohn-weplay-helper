@@ -47,11 +47,6 @@ class HistoryFragment : Fragment() {
         return binding.root
     }
 
-    override fun onResume() {
-        super.onResume()
-        loadHistory()
-    }
-
     fun loadHistory() {
         if (_binding == null) return
         lifecycleScope.launch {

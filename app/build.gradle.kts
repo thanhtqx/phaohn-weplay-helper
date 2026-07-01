@@ -21,8 +21,9 @@ android {
         applicationId = "com.phaohn.spyhelper"
         minSdk = 26
         targetSdk = 34
-        versionCode = 49
-        versionName = "2.3.18"
+        versionCode = 103
+        versionName = "2.3.72"
+        buildConfigField("boolean", "A11Y_DIRECT", "false")
     }
 
     signingConfigs {
@@ -46,6 +47,12 @@ android {
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }
+        }
+        create("direct") {
+            initWith(getByName("release"))
+            versionNameSuffix = "-direct"
+            buildConfigField("boolean", "A11Y_DIRECT", "true")
+            matchingFallbacks += listOf("release")
         }
     }
 

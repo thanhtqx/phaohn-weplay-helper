@@ -1,49 +1,67 @@
 package com.phaohn.spyhelper
 
+import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
-import android.provider.Settings
+import android.os.Process
 import androidx.fragment.app.Fragment
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 object AccessibilitySetupHelper {
 
+    private const val OP_ACCESS_RESTRICTED_SETTINGS = "android:access_restricted_settings"
+
+    fun isRestrictedSettingsAllowed(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+        if (OemSettingsNavigator.isPlayStoreInstall(context)) return true
+        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as? AppOpsManager ?: return false
+        return try {
+            @Suppress("DEPRECATION")
+            val mode = appOps.unsafeCheckOpNoThrow(
+                OP_ACCESS_RESTRICTED_SETTINGS,
+                Process.myUid(),
+                context.packageName,
+            )
+            mode == AppOpsManager.MODE_ALLOWED
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     fun needsRestrictedSettingsUnlock(context: Context): Boolean {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            !SpyAccessibilityService.isEnabled(context)
+            !SpyAccessibilityService.isEnabled(context) &&
+            !OemSettingsNavigator.isPlayStoreInstall(context) &&
+            !isRestrictedSettingsAllowed(context)
     }
 
     fun openAccessibilityFlow(fragment: Fragment) {
         val ctx = fragment.requireContext()
         if (SpyAccessibilityService.isEnabled(ctx)) {
-            fragment.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            OemSettingsNavigator.openAccessibilitySettings(ctx)
             return
         }
-        if (needsRestrictedSettingsUnlock(ctx)) {
-            MaterialAlertDialogBuilder(ctx)
-                .setTitle(R.string.accessibility_restricted_title)
-                .setMessage(R.string.accessibility_restricted_message)
-                .setPositiveButton(R.string.accessibility_open_app_settings) { _, _ ->
-                    openAppDetails(ctx)
-                }
-                .setNegativeButton(R.string.accessibility_open_a11y_settings) { _, _ ->
-                    ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                }
-                .setNeutralButton(android.R.string.cancel, null)
-                .show()
+        if (BuildConfig.A11Y_DIRECT) {
+            openAccessibilityServiceDetails(ctx)
             return
         }
-        fragment.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        fragment.startActivity(Intent(ctx, AccessibilityOnboardingActivity::class.java))
     }
 
-    fun openAppDetails(context: Context) {
-        context.startActivity(
-            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.parse("package:${context.packageName}")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-        )
+    fun openAccessibilityServiceDetails(context: Context) {
+        if (!OemSettingsNavigator.openAccessibilityServiceDetails(context)) {
+            OemSettingsNavigator.openAccessibilitySettings(context)
+        }
+    }
+
+    fun openRestrictedSettings(fragment: Fragment) {
+        val ctx = fragment.requireContext()
+        if (!OemSettingsNavigator.openRestrictedSettings(ctx)) {
+            OemSettingsNavigator.openAppDetails(ctx)
+        }
+    }
+
+    fun openAppDetails(fragment: Fragment) {
+        OemSettingsNavigator.openAppDetails(fragment.requireContext())
     }
 }

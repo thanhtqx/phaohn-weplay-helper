@@ -1,6 +1,6 @@
 import time
 
-from .auth_store import ROLE_ADMIN
+from .auth_store import is_staff
 from .database import get_conn
 from .repository import _can_access_pair
 
@@ -66,13 +66,13 @@ def get_report(report_id: int, user: dict) -> dict | None:
     if not row:
         return None
     item = dict(row)
-    if user["role"] != ROLE_ADMIN and item["reporter_id"] != user["id"]:
+    if not is_staff(user) and item["reporter_id"] != user["id"]:
         return None
     return item
 
 
 def list_reports(user: dict) -> list[dict]:
-    if user["role"] == ROLE_ADMIN:
+    if is_staff(user):
         sql = """
             SELECT r.*, p.civilian_word, p.spy_word, u.username AS reporter_name,
                    o.username AS owner_name

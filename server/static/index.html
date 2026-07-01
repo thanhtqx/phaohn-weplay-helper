@@ -2,147 +2,299 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PhaoHN — Từ khóa Gián điệp</title>
-  <link rel="stylesheet" href="/static/style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Pháo™ — Từ khóa Gián điệp</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/static/style.css?v=38" />
 </head>
-<body class="app-page">
-  <div class="app-shell">
-    <aside class="app-aside">
+<body class="app-page phaohn-app">
+  <div class="sidebar-overlay hidden" id="sidebarOverlay" aria-hidden="true"></div>
+  <div class="app-shell" id="appShell">
+    <aside class="app-aside" id="appAside">
       <a href="/" class="brand">
-        <span class="brand-mark">P</span>
+        <span class="brand-mark brand-mark-phao" aria-hidden="true"><i class="bi bi-fire"></i></span>
         <span class="brand-text">
-          <strong>PhaoHN</strong>
+          <strong class="brand-name">Pháo<sup class="brand-tm">™</sup></strong>
           <small>WePlay Gián điệp</small>
         </span>
       </a>
 
       <p class="app-nav-label">Menu</p>
-      <nav class="app-nav" id="mainNav">
+      <nav class="app-nav app-nav-user" id="mainNav">
         <button type="button" class="app-nav-item active" data-tab="words">
-          <svg class="app-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h16v2H4v-2z"/></svg>
-          Từ khóa
+          <span class="nav-icon-wrap nav-icon-words"><i class="bi bi-journal-text"></i></span>
+          <span class="nav-label-text">Từ khóa</span>
         </button>
         <button type="button" class="app-nav-item" data-tab="history">
-          <svg class="app-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a9 9 0 1 0 9 9h-2a7 7 0 1 1-2.05-4.95L14 10h6V4l-2.52 2.52A8.96 8.96 0 0 0 12 2zm-1 5v5.25l4.5 2.67.75-1.23-3.75-2.22V7H11z"/></svg>
-          Lịch sử
+          <span class="nav-icon-wrap nav-icon-history"><i class="bi bi-clock-history"></i></span>
+          <span class="nav-label-text">Lịch sử</span>
+        </button>
+        <button type="button" class="app-nav-item" data-tab="notifications">
+          <span class="nav-icon-wrap nav-icon-notif"><i class="bi bi-bell"></i></span>
+          <span class="nav-label-text">Thông báo</span>
+          <span class="nav-item-badge hidden" id="sidebarNotifBadge">0</span>
         </button>
       </nav>
 
+      <div class="aside-download" id="asideDownload">
+        <div class="aside-download-icon"><i class="bi bi-phone"></i></div>
+        <div class="aside-download-text">
+          <strong>App Android</strong>
+          <span id="asideApkVersion">Pháo™</span>
+        </div>
+        <a href="/download/apk" class="aside-download-btn" id="asideApkLink" download>Tải APK</a>
+      </div>
+
       <div class="app-aside-foot">
-        <div class="aside-profile">
+        <div class="aside-profile aside-profile-centered">
           <span class="aside-avatar" id="userAvatar">?</span>
           <div class="aside-profile-text">
             <span class="aside-profile-name" id="userBadge"></span>
+            <span class="aside-profile-role" id="userRoleBadge"></span>
             <a id="linkAdmin" class="aside-profile-link hidden" href="/admin">Quản trị</a>
           </div>
         </div>
         <div class="aside-tools">
-          <button id="btnHelp" class="aside-tool-btn" type="button" title="Hướng dẫn" aria-label="Hướng dẫn">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
-          </button>
-          <button id="btnChangePassword" class="aside-tool-btn" type="button" title="Đổi mật khẩu" aria-label="Đổi mật khẩu">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-          </button>
-          <button id="btnLogout" class="aside-tool-btn aside-tool-btn-danger" type="button" title="Thoát" aria-label="Thoát">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
-          </button>
+          <button id="btnHelp" class="aside-tool-btn" type="button" title="Hướng dẫn" aria-label="Hướng dẫn"><i class="bi bi-question-circle"></i></button>
+          <button id="btnChangePassword" class="aside-tool-btn" type="button" title="Đổi mật khẩu" aria-label="Đổi mật khẩu"><i class="bi bi-shield-lock"></i></button>
+          <button id="btnLogout" class="aside-tool-btn aside-tool-btn-danger" type="button" title="Thoát" aria-label="Thoát"><i class="bi bi-box-arrow-right"></i></button>
         </div>
       </div>
     </aside>
 
-    <div class="app-main container-fluid">
-      <section id="tabWords" class="tab-panel active">
-        <header class="page-head">
-          <div>
-            <h1>Từ khóa</h1>
-            <p>Gõ để lọc danh sách · Enter hoặc nút tra để xem từ còn lại</p>
+    <div class="app-main">
+      <header class="app-topbar app-topbar-user">
+        <div class="app-topbar-left">
+          <a href="/" class="topbar-brand-chip">
+            <span class="brand-mark brand-mark-phao brand-mark-xs" aria-hidden="true"><i class="bi bi-fire"></i></span>
+            <span class="topbar-brand-name">Pháo<sup class="brand-tm">™</sup></span>
+          </a>
+          <div class="topbar-heading">
+            <h2 class="app-topbar-title" id="topbarTitle">Từ khóa</h2>
+            <p class="app-topbar-sub" id="topbarSub">Quản lý danh sách từ Gián điệp</p>
           </div>
-        </header>
-
-        <div class="panel">
-          <div class="panel-toolbar">
-            <label class="search-field">
-              <span class="search-glyph" aria-hidden="true">⌕</span>
-              <input id="search" type="search" placeholder="Tìm trong danh sách…" autocomplete="off" />
-              <span class="stat-chip stat-chip-inline" id="stats">0 cặp</span>
-              <button id="btnLookup" class="btn-lookup" type="button" title="Tra cứu từ còn lại" aria-label="Tra cứu">⌕</button>
-            </label>
-            <div class="panel-actions">
-              <button id="btnAdd" class="btn btn-primary" type="button">Thêm</button>
-              <button id="btnImportFile" class="btn btn-secondary" type="button">Nhập file</button>
-              <button id="btnExport" class="btn btn-secondary" type="button">Xuất CSV</button>
+        </div>
+        <div class="app-topbar-right">
+          <div class="bell-wrap" id="bellWrap">
+            <button type="button" class="icon-btn bell-btn" id="btnBell" aria-label="Thông báo" title="Thông báo">
+              <i class="bi bi-bell"></i>
+              <span class="bell-badge hidden" id="bellBadge">0</span>
+            </button>
+            <div class="bell-dropdown hidden" id="bellDropdown">
+              <div class="bell-dropdown-head">
+                <strong>Thông báo</strong>
+                <button type="button" class="bell-link" id="btnBellMarkAll">Đọc hết</button>
+              </div>
+              <div class="bell-dropdown-list" id="bellDropdownList"></div>
+              <button type="button" class="bell-dropdown-foot" id="btnBellViewAll">Xem tất cả thông báo</button>
             </div>
-            <input id="fileInput" type="file" accept=".csv,.xlsx,.xlsm,text/csv" hidden />
           </div>
-
-          <div id="lookupCard" class="lookup-inline hidden">
-            <div class="lookup-inline-body">
-              <p id="lookupMyWord" class="lookup-inline-my"></p>
-              <div id="lookupOthers" class="lookup-inline-others"></div>
-            </div>
-            <button id="btnCloseLookup" class="lookup-inline-close" type="button" aria-label="Đóng">×</button>
-          </div>
-
-          <div class="table-wrap" id="tableScroll">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th class="th-civilian">Dân thường</th>
-                  <th class="th-spy">Gián điệp</th>
-                  <th class="th-owner hidden" id="ownerHeader">Nguồn</th>
-                  <th class="th-actions"></th>
-                </tr>
-              </thead>
-              <tbody id="rows"></tbody>
-            </table>
-            <div id="empty" class="empty-state hidden">
-              <p class="empty-title">Chưa có từ khóa</p>
-              <p class="empty-desc">Thêm thủ công hoặc nhập file Excel/CSV để bắt đầu.</p>
+          <div class="topbar-profile-wrap" id="topbarProfileWrap">
+            <button type="button" class="topbar-profile-btn" id="btnTopbarProfile" aria-haspopup="true" aria-expanded="false" title="Tài khoản">
+              <span class="topbar-profile-avatar" id="topbarAvatar">?</span>
+              <span class="topbar-profile-name" id="topbarUserName">—</span>
+              <i class="bi bi-chevron-down topbar-profile-caret" aria-hidden="true"></i>
+            </button>
+            <div class="profile-dropdown hidden" id="topbarProfileDropdown">
+              <div class="profile-dropdown-head profile-dropdown-head-centered" id="topbarProfileHead">
+                <span class="topbar-profile-avatar topbar-profile-avatar-lg" id="topbarAvatarLg">?</span>
+                <span class="profile-dropdown-head-name" id="topbarUserNameLg">—</span>
+                <span class="profile-dropdown-head-role" id="topbarUserRoleLg"></span>
+              </div>
+              <a href="/download/apk" class="profile-dropdown-item profile-dropdown-dl" id="topbarApkLink" download><i class="bi bi-download"></i> Tải app Android</a>
+              <button type="button" class="profile-dropdown-item" id="topbarBtnHelp"><i class="bi bi-question-circle"></i> Hướng dẫn</button>
+              <button type="button" class="profile-dropdown-item" id="topbarBtnPassword"><i class="bi bi-shield-lock"></i> Đổi mật khẩu</button>
+              <a href="/admin" class="profile-dropdown-item hidden" id="topbarLinkAdmin"><i class="bi bi-gear"></i> Quản trị</a>
+              <div class="profile-dropdown-sep"></div>
+              <button type="button" class="profile-dropdown-item profile-dropdown-item-danger" id="topbarBtnLogout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</button>
             </div>
           </div>
         </div>
-      </section>
+      </header>
 
-      <section id="tabHistory" class="tab-panel hidden">
-        <header class="page-head">
-          <div>
-            <h1>Lịch sử</h1>
-            <p>Các lần tra cứu trên web</p>
-          </div>
-          <span class="stat-chip" id="historyStats">0 lần</span>
-        </header>
+      <div class="app-content container-fluid">
+        <section id="tabWords" class="tab-panel active">
+          <div class="panel panel-elevated panel-table-flex">
+            <div class="panel-toolbar panel-toolbar-search">
+              <div class="toolbar-search-block">
+                <label class="search-field search-field-prominent">
+                  <span class="search-glyph" aria-hidden="true"><i class="bi bi-search"></i></span>
+                  <input id="search" type="search" placeholder="Tìm từ khóa…" autocomplete="off" enterkeyhint="search" />
+                  <button type="button" class="search-clear-btn hidden" id="btnSearchClear" aria-label="Xóa tìm kiếm"><i class="bi bi-x-lg"></i></button>
+                </label>
+                <button id="btnLookup" class="btn-search-action" type="button" title="Tra cứu từ còn lại">
+                  <i class="bi bi-binoculars"></i><span>Tra</span>
+                </button>
+              </div>
+              <div class="panel-actions">
+                <button id="btnAdd" class="btn btn-primary" type="button"><i class="bi bi-plus-lg"></i> Thêm</button>
+                <button id="btnImportFile" class="btn btn-secondary" type="button">Nhập file</button>
+                <button id="btnExport" class="btn btn-secondary" type="button">Xuất CSV</button>
+              </div>
+              <input id="fileInput" type="file" accept=".csv,.xlsx,.xlsm,text/csv" hidden />
+            </div>
 
-        <div class="panel">
-          <div class="panel-toolbar panel-toolbar-end">
-            <button id="btnExportHistory" class="btn btn-secondary" type="button" disabled>Xuất CSV</button>
-            <button id="btnClearHistory" class="btn btn-secondary btn-danger-text" type="button" disabled>Xóa hết</button>
-          </div>
+            <div class="panel-stats-strip" id="wordsStatsStrip">
+              <div class="panel-stat">
+                <span class="panel-stat-icon panel-stat-icon-primary"><i class="bi bi-eye"></i></span>
+                <div class="panel-stat-body">
+                  <span class="panel-stat-value" id="statWordsShowing">0</span>
+                  <span class="panel-stat-label" id="statWordsShowingLabel">Đang hiển thị</span>
+                </div>
+              </div>
+              <div class="panel-stat">
+                <span class="panel-stat-icon"><i class="bi bi-journal-text"></i></span>
+                <div class="panel-stat-body">
+                  <span class="panel-stat-value" id="statWordsTotal">0</span>
+                  <span class="panel-stat-label">Tổng cặp</span>
+                </div>
+              </div>
+              <div class="panel-stat panel-stat-info stat-muted" id="statWordsSharedWrap">
+                <span class="panel-stat-icon panel-stat-icon-info"><i class="bi bi-share"></i></span>
+                <div class="panel-stat-body">
+                  <span class="panel-stat-value" id="statWordsShared">0</span>
+                  <span class="panel-stat-label">Share</span>
+                </div>
+              </div>
+            </div>
 
-          <div class="table-wrap" id="historyScroll">
-            <table class="data-table data-table-history">
-              <thead>
-                <tr>
-                  <th class="th-stt">#</th>
-                  <th class="th-time">Thời gian</th>
-                  <th class="th-myword">Từ của bạn</th>
-                  <th class="th-others">Từ còn lại</th>
-                  <th class="th-actions"></th>
-                </tr>
-              </thead>
-              <tbody id="historyRows"></tbody>
-            </table>
-            <div id="historyEmpty" class="empty-state hidden">
-              <p class="empty-title">Chưa có lịch sử</p>
-              <p class="empty-desc">Tra cứu từ ở tab Từ khóa sẽ được ghi lại tại đây.</p>
+            <div id="lookupCard" class="lookup-card hidden">
+              <div class="lookup-card-head">
+                <button id="btnCloseLookup" class="lookup-card-close" type="button" aria-label="Đóng">×</button>
+              </div>
+              <div class="lookup-fieldset">
+                <div class="lookup-legend">
+                  <span class="lookup-legend-line"></span>
+                  <span class="lookup-legend-text">Từ của tôi</span>
+                  <span class="lookup-legend-line"></span>
+                </div>
+                <div id="lookupMyWord" class="lookup-field-body"></div>
+              </div>
+              <div class="lookup-fieldset">
+                <div class="lookup-legend">
+                  <span class="lookup-legend-line"></span>
+                  <span class="lookup-legend-text">Từ tìm kiếm</span>
+                  <span class="lookup-legend-line"></span>
+                </div>
+                <div id="lookupOthers" class="lookup-field-body lookup-others-lines"></div>
+              </div>
+            </div>
+
+            <div class="table-responsive phaohn-bs-table-wrap js-fit-viewport" id="tableScroll">
+              <table class="table align-middle mb-0 phaohn-bs-table">
+                <thead>
+                  <tr>
+                    <th scope="col" class="text-center th-stt" style="width:3rem">STT</th>
+                    <th scope="col" class="th-civilian">Dân thường</th>
+                    <th scope="col" class="th-spy">Gián điệp</th>
+                    <th scope="col" class="th-owner hidden" id="ownerHeader">Nguồn</th>
+                    <th scope="col" class="text-center th-actions" style="width:4.5rem">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="rows"></tbody>
+              </table>
+              <div id="empty" class="empty-state hidden">
+                <div class="empty-icon"><i class="bi bi-journal-x"></i></div>
+                <p class="empty-title">Chưa có từ khóa</p>
+                <p class="empty-desc">Thêm thủ công hoặc nhập file Excel/CSV để bắt đầu.</p>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <footer class="page-foot">
-        <span>© PhaoHN</span>
-      </footer>
+        <section id="tabNotifications" class="tab-panel hidden">
+          <div class="panel panel-elevated notif-panel">
+            <div class="notif-panel-toolbar notif-panel-toolbar-light">
+              <div class="notif-panel-heading">
+                <span class="notif-panel-icon" aria-hidden="true"><i class="bi bi-bell"></i></span>
+                <div>
+                  <h1 class="notif-panel-title">Thông báo</h1>
+                  <p class="notif-panel-sub">Tin nhắn từ quản trị</p>
+                </div>
+              </div>
+              <button id="btnMarkAllRead" class="btn btn-secondary btn-notif-mark-light" type="button" disabled>
+                <i class="bi bi-check2-all"></i> Đọc hết
+              </button>
+            </div>
+            <div id="notifList" class="notif-list js-fit-viewport"></div>
+            <div id="notifEmpty" class="empty-state notif-empty-state">
+              <div class="empty-icon"><i class="bi bi-bell-slash"></i></div>
+              <p class="empty-title">Chưa có thông báo</p>
+              <p class="empty-desc">Khi Admin gửi tin, bạn sẽ thấy tại đây.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="tabHistory" class="tab-panel hidden">
+          <header class="page-head page-head-compact">
+            <div>
+              <h1>Lịch sử</h1>
+              <p>Các lần tra cứu trên web</p>
+            </div>
+            <div class="page-stats-mini" id="historyStatsWrap">
+              <span class="page-stat-pill"><i class="bi bi-clock-history"></i> <strong id="historyStatsCount">0</strong> lần tra</span>
+              <span class="page-stat-pill page-stat-pill-muted" id="historyStatsLatest"></span>
+            </div>
+          </header>
+          <div class="panel panel-elevated panel-table-flex">
+            <div class="panel-toolbar panel-toolbar-end">
+              <button id="btnExportHistory" class="btn btn-secondary" type="button" disabled>Xuất CSV</button>
+              <button id="btnClearHistory" class="btn btn-secondary btn-danger-text" type="button" disabled>Xóa hết</button>
+            </div>
+            <div class="table-responsive phaohn-bs-table-wrap js-fit-viewport" id="historyScroll">
+              <table class="table align-middle mb-0 phaohn-bs-table phaohn-bs-table-history">
+                <thead>
+                  <tr>
+                    <th scope="col" class="text-center th-stt" style="width:3rem">STT</th>
+                    <th scope="col" class="th-time">Thời gian</th>
+                    <th scope="col" class="th-myword">Từ của bạn</th>
+                    <th scope="col" class="th-others">Từ còn lại</th>
+                    <th scope="col" class="text-center th-actions" style="width:4.5rem">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="historyRows"></tbody>
+              </table>
+              <div id="historyEmpty" class="empty-state hidden">
+                <div class="empty-icon"><i class="bi bi-clock"></i></div>
+                <p class="empty-title">Chưa có lịch sử</p>
+                <p class="empty-desc">Tra cứu từ ở tab Từ khóa sẽ được ghi lại tại đây.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer class="page-foot">
+          <span>© Pháo™</span>
+          <span class="page-foot-sep">·</span>
+          <a href="/download/apk" class="page-foot-link" id="footerApkLink">Tải app Android</a>
+        </footer>
+      </div>
+
+      <nav class="mobile-bottom-nav mobile-bottom-nav-user" id="mobileBottomNav" aria-label="Menu chính">
+        <button type="button" class="mobile-bottom-nav-item active" data-tab="words">
+          <span class="bnav-icon"><i class="bi bi-journal-text"></i></span>
+          <span class="bnav-label">Từ khóa</span>
+        </button>
+        <button type="button" class="mobile-bottom-nav-item" data-tab="history">
+          <span class="bnav-icon"><i class="bi bi-clock-history"></i></span>
+          <span class="bnav-label">Lịch sử</span>
+        </button>
+        <button type="button" class="mobile-bottom-nav-item" data-tab="notifications">
+          <span class="bnav-icon">
+            <i class="bi bi-bell"></i>
+            <span class="bnav-badge hidden" id="mobileNavNotifBadge">0</span>
+          </span>
+          <span class="bnav-label">Thông báo</span>
+        </button>
+        <a href="/download/apk" class="mobile-bottom-nav-item mobile-bottom-nav-dl" id="mobileApkLink" download title="Tải app Android">
+          <span class="bnav-icon bnav-icon-dl"><i class="bi bi-download"></i></span>
+          <span class="bnav-label">Tải app</span>
+        </a>
+      </nav>
     </div>
   </div>
 
@@ -190,16 +342,30 @@
         </ul>
       </section>
       <section class="help-block">
-        <h3>Quyền &amp; đồng bộ</h3>
+        <h3>Thông báo</h3>
         <ul>
-          <li>Mỗi tài khoản chỉ sửa từ của mình; admin sửa được tất cả.</li>
-          <li>Đồng bộ với app qua nút đồng bộ trên điện thoại.</li>
+          <li>Bấm icon <strong>chuông</strong> góc phải để xem tin từ Admin.</li>
         </ul>
       </section>
       <div class="modal-foot">
         <button type="button" class="btn btn-primary" id="btnHelpClose">Đóng</button>
       </div>
     </div>
+  </dialog>
+
+  <dialog id="nicknameDialog" class="modal">
+    <form id="nicknameForm" method="dialog" class="modal-body">
+      <h2 class="modal-title">Đặt biệt danh</h2>
+      <p class="text-muted">Biệt danh hiển thị thay cho tên đăng nhập trên giao diện.</p>
+      <label class="field">
+        Biệt danh
+        <input id="nicknameInput" maxlength="64" required placeholder="VD: Thành Gián điệp" />
+      </label>
+      <p id="nicknameError" class="alert alert-error hidden"></p>
+      <div class="modal-foot">
+        <button type="submit" class="btn btn-primary">Lưu</button>
+      </div>
+    </form>
   </dialog>
 
   <dialog id="changePasswordDialog" class="modal">
@@ -261,6 +427,7 @@
     </div>
   </dialog>
 
-  <script src="/static/app.js"></script>
+  <script src="/static/layout.js?v=33"></script>
+  <script src="/static/app.js?v=33"></script>
 </body>
 </html>
